@@ -6,30 +6,33 @@ chapter: false
 pre: " <b> 6. </b> "
 ---
 
-During my internship at **Amazon Web Services Vietnam Company Limited** from **June 1, 2026** to **August 14, 2026**, I had the opportunity to learn, practice, and apply the knowledge acquired in school to a real-world working environment.  
-I participated in the **First Cloud AI Journey Workforce Bootcamp, where I proposed and worked on an IoT Weather Platform built on AWS serverless services**, through which I improved my skills in **AWS cloud services (IoT Core, Lambda, S3, Glue, Amplify, Cognito), serverless architecture design, and professional communication and reporting**.  
+During my internship at **Amazon Web Services Vietnam Company Limited** from **June 1, 2026** to **August 14, 2026**, I had the opportunity to apply the knowledge learned at university to a real working environment.
 
-In terms of work ethic, I always strived to complete tasks well, complied with workplace regulations, and actively engaged with colleagues to improve work efficiency.
+During the internship, I participated in the **First Cloud AI Journey Workforce Bootcamp** and developed an **E-Commerce Data Pipeline** project on AWS. The project focused on building an end-to-end data pipeline, including data ingestion, ETL processing, data warehousing, and visualization. Through this project, I strengthened my knowledge of **AWS cloud services, data engineering concepts, ETL workflows, SQL, Python, data modeling, and cloud-based analytics**, while also improving teamwork, communication, and presentation skills.
 
-To objectively reflect on my internship period, I would like to evaluate myself based on the following criteria:
+Throughout the internship, I maintained a responsible working attitude, completed assigned tasks on time, actively learned from mentors, and continuously improved my technical skills through feedback and practical experience.
 
-| No. | Criteria                            | Description                                                                                      | Good | Fair | Average |
-| --- | ----------------------------------- | ------------------------------------------------------------------------------------------------ | ---- | ---- | ------- |
-| 1   | **Professional knowledge & skills** | Understanding of the field, applying knowledge in practice, proficiency with tools, work quality | ✅    | ☐    | ☐       |
-| 2   | **Ability to learn**                | Ability to absorb new knowledge and learn quickly                                                | ☐    | ✅    | ☐       |
-| 3   | **Proactiveness**                   | Taking initiative, seeking out tasks without waiting for instructions                            | ✅    | ☐    | ☐       |
-| 4   | **Sense of responsibility**         | Completing tasks on time and ensuring quality                                                    | ✅    | ☐    | ☐       |
-| 5   | **Discipline**                      | Adhering to schedules, rules, and work processes                                                 | ☐    | ☐    | ✅       |
-| 6   | **Progressive mindset**             | Willingness to receive feedback and improve oneself                                              | ☐    | ✅    | ☐       |
-| 7   | **Communication**                   | Presenting ideas and reporting work clearly                                                      | ☐    | ✅    | ☐       |
-| 8   | **Teamwork**                        | Working effectively with colleagues and participating in teams                                   | ✅    | ☐    | ☐       |
-| 9   | **Professional conduct**            | Respecting colleagues, partners, and the work environment                                        | ✅    | ☐    | ☐       |
-| 10  | **Problem-solving skills**          | Identifying problems, proposing solutions, and showing creativity                                | ☐    | ✅    | ☐       |
-| 11  | **Contribution to project/team**    | Work effectiveness, innovative ideas, recognition from the team                                  | ✅    | ☐    | ☐       |
-| 12  | **Overall**                         | General evaluation of the entire internship period                                               | ✅    | ☐    | ☐       |
+To objectively evaluate my internship performance, I provide the following self-assessment:
 
-### Needs Improvement
+| No. | Criteria | Description | Good | Fair | Average |
+| --- | ------------------------------ | ------------------------------------------------------------------ | ---- | ---- | ------- |
+| 1 | **Professional knowledge & skills** | Applying technical knowledge and producing quality work | ☐ | ✅ | ☐ |
+| 2 | **Ability to learn** | Learning new technologies and adapting quickly | ✅ | ☐ | ☐ |
+| 3 | **Proactiveness** | Taking initiative and seeking learning opportunities | ☐ | ✅ | ☐ |
+| 4 | **Sense of responsibility** | Completing assigned tasks on time | ✅ | ☐ | ☐ |
+| 5 | **Discipline** | Following working regulations and schedules | ☐ | ✅ | ☐ |
+| 6 | **Progressive mindset** | Accepting feedback and continuous improvement | ✅ | ☐ | ☐ |
+| 7 | **Communication** | Reporting progress and expressing ideas clearly | ☐ | ✅ | ☐ |
+| 8 | **Teamwork** | Collaborating effectively with teammates | ☐ | ✅ | ☐ |
+| 9 | **Professional conduct** | Respecting colleagues and workplace ethics | ☐ | ✅ | ☐ |
+| 10 | **Problem-solving skills** | Analyzing issues and proposing solutions | ☐ | ✅ | ☐ |
+| 11 | **Contribution to project/team** | Supporting project objectives and team activities | ☐ | ✅ | ☐ |
+| 12 | **Overall** | Overall internship performance | ☐ | ✅ | ☐ |
 
-* Strengthen discipline and strictly comply with the rules and regulations of the company or any organization  
-* Improve problem-solving thinking  
-* Enhance communication skills in both daily interactions and professional contexts, including handling situations effectively
+### Areas for Improvement
+
+- Gain deeper practical experience in designing and optimizing large-scale data pipelines and cloud-based data platforms.
+- Improve knowledge of data modeling, data warehousing, and performance optimization techniques.
+- Strengthen analytical and problem-solving skills when dealing with complex data engineering challenges.
+- Enhance communication and presentation skills when reporting technical solutions and collaborating with cross-functional teams.
+- Continue improving professional English, especially for reading technical documentation and communicating in an international working environment.
