@@ -8,3 +8,4 @@ pre: " <b> 3. </b> "
 
 This section will list and introduce the blogs you have posted to [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj). For example:
 
+### I will add the missing blog post later; I apologize for the inconvenience.
