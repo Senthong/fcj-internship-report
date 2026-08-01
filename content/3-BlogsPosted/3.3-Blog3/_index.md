@@ -1,13 +1,10 @@
 ---
 title: "Blog 3"
-date: 2024-01-01
+date: 2026-07-17
 weight: 1
 chapter: false
 pre: " <b> 3.3. </b> "
 ---
-{{% notice warning %}}
-⚠️ **Note:** The information below is for reference purposes only. Please **do not copy verbatim** for your report, including this warning.
-{{% /notice %}}
 
 # SESSION POLICIES IN AMAZON EKS POD IDENTITY
 

@@ -1,6 +1,6 @@
 ---
 title : "VPC Endpoint Policies"
-date : 2024-01-01
+date : 2026-07-27
 weight : 5
 chapter : false
 pre : " <b> 5.5 </b> "

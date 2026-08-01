@@ -1,13 +1,10 @@
 ---
 title: "Workshop"
-date: 2024-01-01
+date: 2026-07-20
 weight: 5
 chapter: false
 pre: " <b> 5. </b> "
 ---
-{{% notice warning %}}
-⚠️ **Note:** The information below is for reference purposes only. Please **do not copy verbatim** for your report, including this warning.
-{{% /notice %}}
 
 # Secure Hybrid Access to S3 using VPC Endpoints
 

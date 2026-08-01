@@ -1,17 +1,13 @@
 ---
 title: "Self-Assessment"
-date: 2024-01-01
+date: 2026-08-10
 weight: 6
 chapter: false
 pre: " <b> 6. </b> "
 ---
 
-{{% notice warning %}}
-⚠️ **Note:** The information below is for reference purposes only. Please **do not copy it verbatim** into your report, including this warning.
-{{% /notice %}}
-
-During my internship at **[Company/Organization Name]** from **[start date]** to **[end date]**, I had the opportunity to learn, practice, and apply the knowledge acquired in school to a real-world working environment.  
-I participated in **[briefly describe the main project or task]**, through which I improved my skills in **[list skills: programming, analysis, reporting, communication, etc.]**.  
+During my internship at **Amazon Web Services Vietnam Company Limited** from **June 1, 2026** to **August 14, 2026**, I had the opportunity to learn, practice, and apply the knowledge acquired in school to a real-world working environment.  
+I participated in the **First Cloud AI Journey Workforce Bootcamp, where I proposed and worked on an IoT Weather Platform built on AWS serverless services**, through which I improved my skills in **AWS cloud services (IoT Core, Lambda, S3, Glue, Amplify, Cognito), serverless architecture design, and professional communication and reporting**.  
 
 In terms of work ethic, I always strived to complete tasks well, complied with workplace regulations, and actively engaged with colleagues to improve work efficiency.
 
