@@ -1,4 +1,5 @@
-title: "5.2 - Chuẩn bị môi trường triển khai"
+---
+title: "Chuẩn bị môi trường triển khai"
 date: 2026-07-21
 weight: 2
 chapter: false

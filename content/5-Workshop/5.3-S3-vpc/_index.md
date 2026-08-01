@@ -1,5 +1,5 @@
 ---
-title: "5.3 - Deploying the Storage Layer and Data Warehouse on AWS"
+title: "Deploying the Storage Layer and Data Warehouse on AWS"
 date: 2026-07-22
 weight: 3
 chapter: false
@@ -23,5 +23,3 @@ Section 5.3 is divided into two subsections that follow the actual deployment se
 
 - **5.3.2 – Verifying Connectivity and Configuring the dbt Profile** (`5.3.2-test-gwe/`)  
   Demonstrates how to verify the private connection by configuring the dbt profile and testing connectivity between dbt and Amazon Redshift.
-
-![diagram.png](../5.1-Workshop-overview/diagram.png)

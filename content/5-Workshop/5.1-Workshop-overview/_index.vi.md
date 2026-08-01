@@ -1,5 +1,5 @@
 ---
-title: "5.1 - Tổng quan hệ thống"
+title: "Tổng quan hệ thống"
 date: 2026-07-20
 weight: 1
 chapter: false

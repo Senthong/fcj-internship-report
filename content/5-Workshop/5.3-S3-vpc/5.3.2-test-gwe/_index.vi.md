@@ -1,5 +1,5 @@
 ---
-title: "5.3.2 - Kiểm tra kết nối và cấu hình dbt Profile"
+title: "Kiểm tra kết nối và cấu hình dbt Profile"
 date: 2026-07-22
 weight: 2
 chapter: false
@@ -71,5 +71,3 @@ IGNOREHEADER 1;
 ```
 
 Câu lệnh này chạy thành công và trả về số dòng đã nạp là bằng chứng cho thấy: (1) IAM Role gắn với Namespace có đủ quyền đọc bucket; (2) đường mạng từ Redshift đến S3 thông suốt, tức là Gateway VPC Endpoint và Route Table liên quan đã được cấu hình chính xác ở mục 5.3.1. Bảng tạm `raw_customers_test` được xóa ngay sau bước kiểm tra này bằng lệnh `DROP TABLE`, vì đây chỉ là bước xác minh hạ tầng, chưa phải bước nạp dữ liệu chính thức - việc nạp dữ liệu đầy đủ vào các bảng `staging` được trình bày chi tiết ở phần 5.4.1.
-
-> **Ghi chú hình ảnh cần bổ sung:** Chèn hai ảnh chụp màn hình: (1) kết quả chạy lệnh `dbt debug` trong terminal, thể hiện đầy đủ bốn dòng kết quả kiểm tra đều ở trạng thái `PASS` và dòng thông báo cuối cùng "All checks passed!"; (2) kết quả thực thi câu lệnh `COPY` thử nghiệm trong Query Editor v2 của Redshift, thể hiện số dòng đã nạp thành công và không có thông báo lỗi ở panel kết quả.

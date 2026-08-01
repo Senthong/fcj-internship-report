@@ -1,5 +1,5 @@
 ---
-title: "Chapter 5 - Deploying the E-Commerce Data Pipeline"
+title: "Deploying the E-Commerce Data Pipeline"
 date: 2026-07-20
 weight: 5
 chapter: false

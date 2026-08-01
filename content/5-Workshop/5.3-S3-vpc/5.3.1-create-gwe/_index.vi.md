@@ -1,5 +1,5 @@
 ---
-title: "5.3.1 - Khởi tạo hạ tầng lưu trữ và kết nối riêng tới Amazon S3"
+title: "Khởi tạo hạ tầng lưu trữ và kết nối riêng tới Amazon S3"
 weight: 1
 chapter: false
 pre: " <b> 5.3.1 </b> "

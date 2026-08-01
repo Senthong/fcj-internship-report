@@ -1,5 +1,5 @@
 ---
-title: "5.1 - System Overview"
+title: "System Overview"
 date: 2026-07-20
 weight: 1
 chapter: false

@@ -1,5 +1,5 @@
 ---
-title: "5.3.1 - Provisioning the Storage Infrastructure and Private Connectivity to Amazon S3"
+title: "Provisioning the Storage Infrastructure and Private Connectivity to Amazon S3"
 weight: 1
 chapter: false
 pre: " <b> 5.3.1 </b> "

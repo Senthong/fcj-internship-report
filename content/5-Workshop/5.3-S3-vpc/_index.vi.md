@@ -1,5 +1,5 @@
 ---
-title: "5.3 - Triển khai tầng lưu trữ và kho dữ liệu trên AWS"
+title: "Triển khai tầng lưu trữ và kho dữ liệu trên AWS"
 date: 2026-07-22
 weight: 3
 chapter: false
@@ -16,5 +16,3 @@ Phần 5.3 được chia thành hai mục nhỏ, tương ứng với hai giai đ
 
 - [5.3.1 - Khởi tạo hạ tầng lưu trữ và kết nối riêng tới Amazon S3](5.3.1-create-gwe/): trình bày việc khởi tạo Amazon S3 Bucket, Amazon Redshift Serverless, và cấu hình Gateway VPC Endpoint.
 - [5.3.2 - Kiểm tra kết nối và cấu hình dbt Profile](5.3.2-test-gwe/): trình bày việc xác minh đường kết nối đã hoạt động đúng thông qua việc cấu hình và kiểm thử kết nối dbt tới Redshift.
-
-![diagram.png](../5.1-Workshop-overview/diagram.png)

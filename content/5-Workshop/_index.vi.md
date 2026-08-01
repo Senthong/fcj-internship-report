@@ -1,5 +1,5 @@
 ---
-title: "Chương 5 - Triển khai hệ thống E-Commerce Data Pipeline"
+title: "Triển khai hệ thống E-Commerce Data Pipeline"
 date: 2026-07-20
 weight: 5
 chapter: false

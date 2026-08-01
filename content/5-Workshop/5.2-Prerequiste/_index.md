@@ -1,5 +1,5 @@
 ---
-title: "5.2 - Environment Preparation"
+title: "Environment Preparation"
 date: 2026-07-21
 weight: 2
 chapter: false
