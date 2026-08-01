@@ -1,19 +1,38 @@
 ---
-title : "Giới thiệu"
-date : 2026-07-20 
-weight : 1
-chapter : false
-pre : " <b> 5.1. </b> "
+title: "Introduction"
+date: 2026-07-20
+weight: 1
+chapter: false
+pre: " <b> 5.1. </b> "
 ---
 
-#### Giới thiệu về VPC Endpoint
+## 1. Workshop Objectives
 
-+ Điểm cuối VPC (endpoint) là thiết bị ảo. Chúng là các thành phần VPC có thể mở rộng theo chiều ngang, dự phòng và có tính sẵn sàng cao. Chúng cho phép giao tiếp giữa tài nguyên điện toán của bạn và dịch vụ AWS mà không gây ra rủi ro về tính sẵn sàng.
-+ Tài nguyên điện toán đang chạy trong VPC có thể truy cập Amazon S3 bằng cách sử dụng điểm cuối Gateway. Interface Endpoint  PrivateLink có thể được sử dụng bởi tài nguyên chạy trong VPC hoặc tại TTDL.
+After completing this workshop, you will be able to:
 
-#### Tổng quan về workshop
-Trong workshop này, bạn sẽ sử dụng hai VPC.
-+ **"VPC Cloud"** dành cho các tài nguyên cloud như Gateway endpoint và EC2 instance để kiểm tra.
-+ **"VPC On-Prem"** mô phỏng môi trường truyền thống như nhà máy hoặc trung tâm dữ liệu của công ty. Một EC2 Instance chạy phần mềm StrongSwan VPN đã được triển khai trong "VPC On-prem" và được cấu hình tự động để thiết lập đường hầm VPN Site-to-Site với AWS Transit Gateway. VPN này mô phỏng kết nối từ một vị trí tại TTDL (on-prem) với AWS cloud. Để giảm thiểu chi phí, chỉ một phiên bản VPN được cung cấp để hỗ trợ workshop này. Khi lập kế hoạch kết nối VPN cho production workloads của bạn, AWS khuyên bạn nên sử dụng nhiều thiết bị VPN để có tính sẵn sàng cao.
+- Design a data pipeline based on the **ELT (Extract - Load - Transform)** architecture.
+- Integrate **Apache Airflow** to orchestrate the entire workflow automatically.
+- Use **dbt Core** to build data layers, including **Staging**, **Intermediate**, and **Data Marts**.
+- Apply advanced **Data Quality Testing** techniques, such as detecting fanout join issues and validating data integrity.
 
-![overview](/images/5-Workshop/5.1-Workshop-overview/diagram1.png)
+---
+
+## 2. System Architecture
+
+The data pipeline in this project is organized as follows:
+
+![overview](diagram.png)
+
+![overview](Architecture.png)
+
+---
+
+## 3. Key Components
+
+| Component | Role in the System |
+|-----------|--------------------|
+| PostgreSQL | OLTP database that stores transactional data, including orders, products, and customers. |
+| Amazon S3 | Data Lake for storing raw data in CSV and Parquet formats. |
+| Amazon Redshift | Cloud data warehouse used to store staging tables and Data Mart models. |
+| dbt Core | Performs data transformations, modeling, indexing, layer organization, and data quality testing. |
+| Apache Airflow | Schedules, orchestrates, and monitors the entire data pipeline. |

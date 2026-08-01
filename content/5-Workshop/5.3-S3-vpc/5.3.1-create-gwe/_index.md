@@ -1,40 +1,30 @@
 ---
-title : "Create a gateway endpoint"
-date : 2026-07-22 
-weight : 1
-chapter : false
-pre : " <b> 5.3.1 </b> "
+title: "5.3.1 - Creating the S3 Bucket & Amazon Redshift Cluster"
+weight: 1
 ---
 
-1. Open the [Amazon VPC console](https://us-east-1.console.aws.amazon.com/vpc/home?region=us-east-1#Home:)
-2. In the navigation pane, choose **Endpoints**, then click **Create Endpoint**:
+### Step 1: Create an Amazon S3 Bucket for Raw Data
 
-{{% notice note %}}
-You will see **6 existing VPC endpoints** that support **AWS Systems Manager (SSM)**. These endpoints were deployed automatically by the **CloudFormation Templates** for this workshop.
-{{% /notice %}}
+1. Open the **Amazon S3 Console** and choose **Create bucket**.
+2. Enter the bucket name: `ecom-raw-data-lake-prod`.
+3. Keep the default settings and click **Create bucket**.
 
-![endpoint](/images/5-Workshop/5.3-S3-vpc/endpoints.png)
+![Create S3 Bucket](images/5.3.1-s3-bucket.png)
 
-3. In the Create endpoint console:
-+ Specify name of the endpoint: ```s3-gwe```
-+ In service category, choose **AWS services**
+> 📸 **Screenshot Suggestion 5.3.1a:** Capture the Amazon S3 Buckets page showing that the `ecom-raw-data-lake-prod` bucket has been created successfully.
 
-![endpoint](/images/5-Workshop/5.3-S3-vpc/create-s3-gwe1.png)
+---
 
-+ In **Services**, type ```s3``` in the search box and choose the service with type **gateway**
+### Step 2: Create an Amazon Redshift Cluster
 
-![endpoint](/images/5-Workshop/5.3-S3-vpc/services.png)
+1. Open the **Amazon Redshift Console** and choose **Create cluster**.
+2. Configure the following settings:
+   - **Cluster identifier:** `redshift-ecom-dw`
+   - **Database name:** `dev`
+   - **Admin user:** `awsuser`
+3. After the cluster has been provisioned, create the required schemas in Redshift:
 
-+ For VPC, select **VPC Cloud** from the drop-down.
-+ For **Configure route tables**, select the route table that is already associated with **two subnets** (note: this is not the main route table for the VPC, but a second route table created by CloudFormation).
-
-![endpoint](/images/5-Workshop/5.3-S3-vpc/vpc.png)
-
-+ **For Policy**, leave the default option, **Full Access**, to allow full access to the service. You will deploy **a VPC endpoint policy** in a later lab module to demonstrate restricting access to **S3 buckets** based on policies.
-
-![endpoint](/images/5-Workshop/5.3-S3-vpc/policy.png)
-
-+ Do not add a tag to the VPC endpoint at this time.
-+ Click **Create endpoint**, then click x after receiving a successful creation message.
-
-![endpoint](/images/5-Workshop/5.3-S3-vpc/complete.png)
+```sql
+CREATE SCHEMA staging;
+CREATE SCHEMA mart;
+```

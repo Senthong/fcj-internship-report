@@ -1,40 +1,68 @@
 ---
-title : "Tạo một S3 Interface endpoint"
+title : "create-interface-enpoint"
 date : 2026-07-23
 weight : 2
 chapter : false
 pre : " <b> 5.4.2 </b> "
 ---
 
-Trong phần này, bạn sẽ tạo và kiểm tra Interface Endpoint  S3 bằng cách sử dụng môi trường truyền thống mô phỏng.
+### Xây dựng Model `seller_performance.sql`
 
-1. Quay lại Amazon VPC menu. Trong thanh điều hướng bên trái, chọn Endpoints, sau đó click Create Endpoint.
+Model này tổng hợp hiệu suất của từng nhà bán hàng (doanh thu, điểm đánh giá, tỷ lệ giao hàng trễ, và điểm tổng hợp `seller_score` từ 0 - 100).
 
-2. Trong Create endpoint console:
-+ Đặt tên interface endpoint
-+ Trong Service category, chọn **aws services** 
+```sql
+-- models/mart/operations/seller_performance.sql
+{{
+    config(
+        materialized='table',
+        dist='seller_id',
+        tags=['mart', 'operations']
+    )
+}}
 
-![name](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint1.png)
+with sellers as (
+    select * from {{ ref('stg_sellers') }}
+),
+items as (
+    select * from {{ ref('stg_order_items') }}
+),
+orders as (
+    select * from {{ ref('stg_orders') }}
+    where order_date >= '{{ var("start_date") }}'
+),
+reviews as (
+    select * from {{ ref('stg_order_reviews') }}
+),
 
-3.  Trong Search box, gõ S3 và nhấn Enter. Chọn endpoint có tên com.amazonaws.us-east-1.s3. Đảm bảo rằng cột Type có giá trị Interface.
+-- Khắc phục lỗi Fanout Join bằng COUNT DISTINCT order_id
+seller_delivery as (
+    select
+        i.seller_id,
+        count(distinct o.order_id) as delivered_orders,
+        count(distinct case when o.is_late_delivery then o.order_id end) as late_deliveries
+    from items i
+    join orders o on i.order_id = o.order_id
+    where o.is_delivered = true
+    group by 1
+),
 
-![service](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint2.png)
+final as (
+    select
+        s.seller_id,
+        s.city as seller_city,
+        -- Tính toán điểm chỉ số Seller Score (Thang điểm 0 - 100)
+        round(
+            (coalesce(rv.avg_review_score, 3) / 5.0 * 50) 
+            + (1.0 - coalesce(d.late_deliveries, 0)::float 
+                / nullif(coalesce(d.delivered_orders, 1), 0)) * 50,
+            1
+        ) as seller_score,
+        current_timestamp as dbt_updated_at
+    from sellers s
+    left join seller_delivery d on s.seller_id = d.seller_id
+    left join seller_reviews rv on s.seller_id = rv.seller_id
+)
 
-4. Đối với VPC, chọn VPC Cloud từ drop-down.
-+ Mở rộng **Additional settings** và đảm bảo rằng Enable DNS name *không* được chọn (sẽ sử dụng điều này trong phần tiếp theo của workshop)
+select * from final
 
-![vpc](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint3.png)
-
-5. Chọn 2 subnets trong AZs sau: us-east-1a and us-east-1b
-
-![subnets](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint4.png)
-
-6. Đối với Security group, chọn SGforS3Endpoint:
-
-![sg](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint5.png)
-
-7. Giữ default policy - full access và click Create endpoint
-
-![success](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint-success.png)
-
-Chúc mừng bạn đã tạo thành công S3 interface endpoint. Ở bước tiếp theo, chúng ta sẽ kiểm tra interface endpoint.
+![seller_score caculator](image.png)

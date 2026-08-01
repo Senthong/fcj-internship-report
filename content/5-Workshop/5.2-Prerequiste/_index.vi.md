@@ -1,242 +1,87 @@
 ---
-title : "Các bước chuẩn bị"
-date : 2026-07-21 
-weight : 2
-chapter : false
-pre : " <b> 5.2. </b> "
+title: "5.2 - Yêu cầu chuẩn bị"
+date: 2026-07-21
+weight: 2
+chapter: false
+pre: " <b> 5.2. </b> "
 ---
 
-#### IAM permissions
-Gắn IAM permission policy sau vào tài khoản aws user của bạn để triển khai và dọn dẹp tài nguyên trong workshop này.
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "VisualEditor0",
-            "Effect": "Allow",
-            "Action": [
-                "cloudformation:*",
-                "cloudwatch:*",
-                "ec2:AcceptTransitGatewayPeeringAttachment",
-                "ec2:AcceptTransitGatewayVpcAttachment",
-                "ec2:AllocateAddress",
-                "ec2:AssociateAddress",
-                "ec2:AssociateIamInstanceProfile",
-                "ec2:AssociateRouteTable",
-                "ec2:AssociateSubnetCidrBlock",
-                "ec2:AssociateTransitGatewayRouteTable",
-                "ec2:AssociateVpcCidrBlock",
-                "ec2:AttachInternetGateway",
-                "ec2:AttachNetworkInterface",
-                "ec2:AttachVolume",
-                "ec2:AttachVpnGateway",
-                "ec2:AuthorizeSecurityGroupEgress",
-                "ec2:AuthorizeSecurityGroupIngress",
-                "ec2:CreateClientVpnEndpoint",
-                "ec2:CreateClientVpnRoute",
-                "ec2:CreateCustomerGateway",
-                "ec2:CreateDhcpOptions",
-                "ec2:CreateFlowLogs",
-                "ec2:CreateInternetGateway",
-                "ec2:CreateLaunchTemplate",
-                "ec2:CreateNetworkAcl",
-                "ec2:CreateNetworkInterface",
-                "ec2:CreateNetworkInterfacePermission",
-                "ec2:CreateRoute",
-                "ec2:CreateRouteTable",
-                "ec2:CreateSecurityGroup",
-                "ec2:CreateSubnet",
-                "ec2:CreateSubnetCidrReservation",
-                "ec2:CreateTags",
-                "ec2:CreateTransitGateway",
-                "ec2:CreateTransitGatewayPeeringAttachment",
-                "ec2:CreateTransitGatewayPrefixListReference",
-                "ec2:CreateTransitGatewayRoute",
-                "ec2:CreateTransitGatewayRouteTable",
-                "ec2:CreateTransitGatewayVpcAttachment",
-                "ec2:CreateVpc",
-                "ec2:CreateVpcEndpoint",
-                "ec2:CreateVpcEndpointConnectionNotification",
-                "ec2:CreateVpcEndpointServiceConfiguration",
-                "ec2:CreateVpnConnection",
-                "ec2:CreateVpnConnectionRoute",
-                "ec2:CreateVpnGateway",
-                "ec2:DeleteCustomerGateway",
-                "ec2:DeleteFlowLogs",
-                "ec2:DeleteInternetGateway",
-                "ec2:DeleteNetworkInterface",
-                "ec2:DeleteNetworkInterfacePermission",
-                "ec2:DeleteRoute",
-                "ec2:DeleteRouteTable",
-                "ec2:DeleteSecurityGroup",
-                "ec2:DeleteSubnet",
-                "ec2:DeleteSubnetCidrReservation",
-                "ec2:DeleteTags",
-                "ec2:DeleteTransitGateway",
-                "ec2:DeleteTransitGatewayPeeringAttachment",
-                "ec2:DeleteTransitGatewayPrefixListReference",
-                "ec2:DeleteTransitGatewayRoute",
-                "ec2:DeleteTransitGatewayRouteTable",
-                "ec2:DeleteTransitGatewayVpcAttachment",
-                "ec2:DeleteVpc",
-                "ec2:DeleteVpcEndpoints",
-                "ec2:DeleteVpcEndpointServiceConfigurations",
-                "ec2:DeleteVpnConnection",
-                "ec2:DeleteVpnConnectionRoute",
-                "ec2:Describe*",
-                "ec2:DetachInternetGateway",
-                "ec2:DisassociateAddress",
-                "ec2:DisassociateRouteTable",
-                "ec2:GetLaunchTemplateData",
-                "ec2:GetTransitGatewayAttachmentPropagations",
-                "ec2:ModifyInstanceAttribute",
-                "ec2:ModifySecurityGroupRules",
-                "ec2:ModifyTransitGatewayVpcAttachment",
-                "ec2:ModifyVpcAttribute",
-                "ec2:ModifyVpcEndpoint",
-                "ec2:ReleaseAddress",
-                "ec2:ReplaceRoute",
-                "ec2:RevokeSecurityGroupEgress",
-                "ec2:RevokeSecurityGroupIngress",
-                "ec2:RunInstances",
-                "ec2:StartInstances",
-                "ec2:StopInstances",
-                "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
-                "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-                "iam:AddRoleToInstanceProfile",
-                "iam:AttachRolePolicy",
-                "iam:CreateInstanceProfile",
-                "iam:CreatePolicy",
-                "iam:CreateRole",
-                "iam:DeleteInstanceProfile",
-                "iam:DeletePolicy",
-                "iam:DeleteRole",
-                "iam:DeleteRolePolicy",
-                "iam:DetachRolePolicy",
-                "iam:GetInstanceProfile",
-                "iam:GetPolicy",
-                "iam:GetRole",
-                "iam:GetRolePolicy",
-                "iam:ListPolicyVersions",
-                "iam:ListRoles",
-                "iam:PassRole",
-                "iam:PutRolePolicy",
-                "iam:RemoveRoleFromInstanceProfile",
-                "lambda:CreateFunction",
-                "lambda:DeleteFunction",
-                "lambda:DeleteLayerVersion",
-                "lambda:GetFunction",
-                "lambda:GetLayerVersion",
-                "lambda:InvokeFunction",
-                "lambda:PublishLayerVersion",
-                "logs:CreateLogGroup",
-                "logs:DeleteLogGroup",
-                "logs:DescribeLogGroups",
-                "logs:PutRetentionPolicy",
-                "route53:ChangeTagsForResource",
-                "route53:CreateHealthCheck",
-                "route53:CreateHostedZone",
-                "route53:CreateTrafficPolicy",
-                "route53:DeleteHostedZone",
-                "route53:DisassociateVPCFromHostedZone",
-                "route53:GetHostedZone",
-                "route53:ListHostedZones",
-                "route53domains:ListDomains",
-                "route53domains:ListOperations",
-                "route53domains:ListTagsForDomain",
-                "route53resolver:AssociateResolverEndpointIpAddress",
-                "route53resolver:AssociateResolverRule",
-                "route53resolver:CreateResolverEndpoint",
-                "route53resolver:CreateResolverRule",
-                "route53resolver:DeleteResolverEndpoint",
-                "route53resolver:DeleteResolverRule",
-                "route53resolver:DisassociateResolverEndpointIpAddress",
-                "route53resolver:DisassociateResolverRule",
-                "route53resolver:GetResolverEndpoint",
-                "route53resolver:GetResolverRule",
-                "route53resolver:ListResolverEndpointIpAddresses",
-                "route53resolver:ListResolverEndpoints",
-                "route53resolver:ListResolverRuleAssociations",
-                "route53resolver:ListResolverRules",
-                "route53resolver:ListTagsForResource",
-                "route53resolver:UpdateResolverEndpoint",
-                "route53resolver:UpdateResolverRule",
-                "s3:AbortMultipartUpload",
-                "s3:CreateBucket",
-                "s3:DeleteBucket",
-                "s3:DeleteObject",
-                "s3:GetAccountPublicAccessBlock",
-                "s3:GetBucketAcl",
-                "s3:GetBucketOwnershipControls",
-                "s3:GetBucketPolicy",
-                "s3:GetBucketPolicyStatus",
-                "s3:GetBucketPublicAccessBlock",
-                "s3:GetObject",
-                "s3:GetObjectVersion",
-                "s3:GetBucketVersioning",
-                "s3:ListAccessPoints",
-                "s3:ListAccessPointsForObjectLambda",
-                "s3:ListAllMyBuckets",
-                "s3:ListBucket",
-                "s3:ListBucketMultipartUploads",
-                "s3:ListBucketVersions",
-                "s3:ListJobs",
-                "s3:ListMultipartUploadParts",
-                "s3:ListMultiRegionAccessPoints",
-                "s3:ListStorageLensConfigurations",
-                "s3:PutAccountPublicAccessBlock",
-                "s3:PutBucketAcl",
-                "s3:PutBucketPolicy",
-                "s3:PutBucketPublicAccessBlock",
-                "s3:PutObject",
-                "secretsmanager:CreateSecret",
-                "secretsmanager:DeleteSecret",
-                "secretsmanager:DescribeSecret",
-                "secretsmanager:GetSecretValue",
-                "secretsmanager:ListSecrets",
-                "secretsmanager:ListSecretVersionIds",
-                "secretsmanager:PutResourcePolicy",
-                "secretsmanager:TagResource",
-                "secretsmanager:UpdateSecret",
-                "sns:ListTopics",
-                "ssm:DescribeInstanceProperties",
-                "ssm:DescribeSessions",
-                "ssm:GetConnectionStatus",
-                "ssm:GetParameters",
-                "ssm:ListAssociations",
-                "ssm:ResumeSession",
-                "ssm:StartSession",
-                "ssm:TerminateSession"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
+## 1. Yêu cầu cấu hình phần cứng tối thiểu
 
-```
+Để đảm bảo môi trường phát triển chạy mượt mà khi khởi chạy đồng thời nhiều Docker container (Apache Airflow, PostgreSQL) và kết nối với đám mây AWS, máy tính cá nhân cần đáp ứng các thông số phần cứng tối thiểu sau:
 
-#### Khởi tạo tài nguyên bằng CloudFormation
+| Thành phần | Cấu hình tối thiểu | Cấu hình khuyến nghị |
+| :--- | :--- | :--- |
+| **Hệ điều hành** | Windows 10/11 Pro/Enterprise (WSL2), macOS 12+, Ubuntu 20.04 LTS | Windows 11 Pro (WSL2), macOS Apple Silicon (M1/M2/M3), Ubuntu 22.04 LTS |
+| **CPU** | 4 Cores / 8 Threads | 8 Cores / 16 Threads |
+| **Bộ nhớ RAM** | 8 GB | 16 GB trở lên (đặc biệt cần thiết khi chạy Airflow) |
+| **Dung lượng đĩa trống** | 20 GB SSD | 50 GB NVMe SSD |
 
-Trong lab này, chúng ta sẽ dùng N.Virginia region (us-east-1).
+---
 
-Để chuẩn bị cho môi trường làm workshop, chúng ta deploy CloudFormation template sau (click link): [PrivateLinkWorkshop ](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate?templateURL=https://s3.us-east-1.amazonaws.com/reinvent-endpoints-builders-session/Nested.yaml&stackName=PLCloudSetup). Để nguyên các lựa chọn mặc định.
+## 2. Tài khoản AWS và Cấu hình Phân quyền (IAM)
 
-![create stack](/images/5-Workshop/5.2-Prerequisite/create-stack1.png)
+Dự án sử dụng hai dịch vụ hạ tầng đám mây cốt lõi của AWS là Amazon S3 và Amazon Redshift. Trước khi bắt đầu, bạn cần chuẩn bị tài khoản và phân quyền truy cập.
 
-+ Lựa chọn 2 mục acknowledgement 
-+ Chọn Create stack
+### 2.1. Tài khoản AWS Active
+* Tài khoản AWS đã được xác thực thanh toán và đang ở trạng thái hoạt động (Active).
+* Quyền truy cập vào **AWS Management Console**.
 
-![create stack](/images/5-Workshop/5.2-Prerequisite/create-stack2.png)
+### 2.2. Khởi tạo IAM User và Access Keys
+* Tạo một IAM User chuyên dụng dành cho bài thực hành (ví dụ: `data-pipeline-admin`).
+* Cấp quyền cho IAM User với các chính sách (Policies) tối thiểu:
+  * `AmazonS3FullAccess`: Quyền tạo, đọc, ghi và xóa dữ liệu trên AWS S3 Bucket.
+  * `AmazonRedshiftFullAccess`: Quyền tạo, quản lý cluster/serverless và thực thi query trên Amazon Redshift.
+* Khởi tạo **Access Key ID** và **Secret Access Key** thuộc dạng *Programmatic Access* để cấu hình kết nối tự động từ Apache Airflow và AWS CLI.
 
-Quá trình triển khai CloudFormation cần khoảng 15 phút để hoàn thành.
+![IAM User](5.2-aws-iam-keys.png)
+### 2.3. Cấu hình Tài nguyên Đám mây
+1. **Amazon S3 Bucket:**
+   * Tạo một S3 Bucket mới (ví dụ: `ecom-data-lake-raw-uniquename`).
+   * Chọn vùng (Region) cùng khu vực với Redshift (khuyến nghị: `ap-southeast-1` - Singapore).
+   * Giữ nguyên cấu hình chặn truy cập công khai (*Block all public access*).
+2. **Amazon Redshift Cluster / Serverless:**
+   * Khởi tạo Redshift Serverless Workgroup hoặc Provisioned Cluster (định dạng node: `dc2.large` hoặc `ra3.xlplus`).
+   * Cấu hình **Inbound Rules** trong **VPC Security Group** của Redshift: Cho phép lưu lượng truy cập qua cổng `5439` từ địa chỉ IP cá nhân của bạn hoặc từ môi trường chạy Airflow.
 
-![complete](/images/5-Workshop/5.2-Prerequisite/complete.png)
+---
 
-+ 2 VPCs đã được tạo
+## 3. Môi trường Container và Đóng gói (Docker)
 
-![vpcs](/images/5-Workshop/5.2-Prerequisite/vpcs.png)
+Toàn bộ hệ thống pipeline cục bộ được đóng gói và vận hành thông qua Docker nhằm đảm bảo tính đồng nhất về môi trường chạy giữa các máy tính khác nhau.
 
-+ 3 EC2s đã được tạo
+### 3.1. Cài đặt Docker Engine & Docker Compose
+* Cài đặt **Docker Desktop** (trên Windows/macOS) hoặc **Docker Engine** kèm plugin `docker-compose-plugin` (trên Linux).
+* Đảm bảo phiên bản Docker Compose tối thiểu từ `v2.20.0` trở lên.
 
-![EC2](/images/5-Workshop/5.2-Prerequisite/ec2.png)
+### 3.2. Cấu hình dịch vụ trong Docker Compose
+Dự án vận hành tập trung thông qua tệp `docker-compose.yml`, bao gồm các container chính:
+
+1. **Airflow Webserver:** Cung cấp giao diện quản trị đồ họa (UI) tại cổng `8080`.
+2. **Airflow Scheduler:** Chịu trách nhiệm quét DAGs, lập lịch và phân phối công việc cho các Worker.
+3. **Airflow Metadata Database:** Sử dụng PostgreSQL làm cơ sở dữ liệu lưu trữ trạng thái của pipeline.
+4. **Source Database (OLTP):** Thư viện PostgreSQL độc lập đóng vai trò là cơ sở dữ liệu giao dịch nguồn, chứa dữ liệu thô đầu vào (Olist E-Commerce dataset).
+
+![Docker Containers Running](5.2-docker-ps.png)
+
+---
+
+## 4. Công cụ Lập trình và Quản lý Cơ sở dữ liệu
+
+### 4.1. Môi trường Python Cục bộ (Local Python Environment)
+* Cài đặt Python phiên bản `3.11` trở lên trên máy cục bộ để phục vụ phát triển code script và chạy dbt CLI trực tiếp khi cần kiểm thử.
+* Cài đặt gói mở rộng dbt dành cho Redshift:
+  ```bash
+  pip install dbt-core dbt-redshift
+### 4.2. Trình soạn thảo VS Code và các Extension bắt buộc
+Sử dụng Visual Studio Code làm môi trường phát triển tích hợp (IDE). Cần cài đặt sẵn các tiện ích mở rộng (Extensions) sau:
+
+Python (ms-python.python): Hỗ trợ IntelliSense, linting và debug code Python.
+
+dbt Power User (innoverio.vscode-dbt-power-user): Hỗ trợ compiled query, xem đồ thị dòng chảy dữ liệu (Lineage Graph) và chạy nhanh dbt model.
+
+Docker (ms-azuretools.vscode-docker): Quản lý container, images và theo dõi log trực tiếp trên IDE.
+
+YAML (redhat.vscode-yaml): Kiểm tra cú pháp các file cấu hình docker-compose.yml, profiles.yml và schema.yml.
+
+5. Danh mục kiểm tra mức độ sẵn sàng (Readiness Checklist)Trước khi tiến hành bước tiếp theo, hãy đảm bảo bạn đã tích chọn hoàn thành tất cả các mục trong bảng kiểm tra dưới đây:STTHạng mục kiểm traLệnh xác minh / Thao tácTrạng thái đạt1Docker Engine & Composedocker --version và docker compose versionĐạt2Các Container dự ándocker ps hiển thị đủ Airflow và PostgresĐạt3Quyền truy cập AWS CLIaws sts get-caller-identity trả về thông tin IAM UserĐạt4Kết nối S3 Bucketaws s3 ls s3://<ten-bucket-cua-ban> không báo lỗiĐạt5dbt Core CLIdbt --version hiển thị phiên bản dbt-core và dbt-redshiftĐạt6Giao diện Airflow UITruy cập http://localhost:8080 đăng nhập thành côngĐạt

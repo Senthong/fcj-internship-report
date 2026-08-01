@@ -1,40 +1,96 @@
 ---
-title : "Create an S3 Interface endpoint"
+title : "create-interface-enpoint"
 date : 2026-07-23
 weight : 2
 chapter : false
 pre : " <b> 5.4.2 </b> "
 ---
 
-In this section you will create and test an S3 interface endpoint using the simulated on-premises environment deployed as part of this workshop.
+### Build the `seller_performance.sql` Model
 
-1. Return to the Amazon VPC menu. In the navigation pane, choose Endpoints, then click Create Endpoint.
+This model aggregates performance metrics for each seller, including revenue, customer review ratings, late delivery rate, and a composite **seller_score** ranging from **0 to 100**.
 
-2. In Create endpoint console:
-+ Name the interface endpoint
-+ In Service category, choose **aws services** 
+```sql
+-- models/mart/operations/seller_performance.sql
+{{
+    config(
+        materialized='table',
+        dist='seller_id',
+        tags=['mart', 'operations']
+    )
+}}
 
-![name](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint1.png)
+with sellers as (
+    select * from {{ ref('stg_sellers') }}
+),
+items as (
+    select * from {{ ref('stg_order_items') }}
+),
+orders as (
+    select * from {{ ref('stg_orders') }}
+    where order_date >= '{{ var("start_date") }}'
+),
+reviews as (
+    select * from {{ ref('stg_order_reviews') }}
+),
 
-3.  In the Search box, type S3 and press Enter. Select the endpoint named com.amazonaws.us-east-1.s3. Ensure that the Type column indicates Interface.
+-- Prevent fanout joins by counting distinct order IDs
+seller_delivery as (
+    select
+        i.seller_id,
+        count(distinct o.order_id) as delivered_orders,
+        count(distinct case when o.is_late_delivery then o.order_id end) as late_deliveries
+    from items i
+    join orders o on i.order_id = o.order_id
+    where o.is_delivered = true
+    group by 1
+),
 
-![service](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint2.png)
+final as (
+    select
+        s.seller_id,
+        s.city as seller_city,
 
-4. For VPC, select VPC Cloud from the drop-down.
-+ Expand **Additional settings** and ensure that Enable DNS name is *not* selected (we will use this in the next part of the workshop)
+        -- Calculate the Seller Score (0–100 scale)
+        round(
+            (coalesce(rv.avg_review_score, 3) / 5.0 * 50)
+            + (
+                1.0
+                - coalesce(d.late_deliveries, 0)::float
+                / nullif(coalesce(d.delivered_orders, 1), 0)
+            ) * 50,
+            1
+        ) as seller_score,
 
-![vpc](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint3.png)
+        current_timestamp as dbt_updated_at
 
-5. Select 2 subnets in the following AZs: us-east-1a and us-east-1b
+    from sellers s
+    left join seller_delivery d
+        on s.seller_id = d.seller_id
+    left join seller_reviews rv
+        on s.seller_id = rv.seller_id
+)
 
-![subnets](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint4.png)
+select * from final
+```
 
-6. For Security group, choose SGforS3Endpoint:
+The **seller_score** is calculated using two equally weighted components:
 
-![sg](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint5.png)
+- **Customer Review Score (50%)** – Based on the seller's average review rating, normalized from a 5-point scale to 50 points.
+- **On-Time Delivery Score (50%)** – Calculated from the percentage of delivered orders that were not delivered late.
 
-7. Keep the default policy - full access and click Create endpoint
+The final score is computed using the following formula:
 
-![success](/images/5-Workshop/5.4-S3-onprem/s3-interface-endpoint-success.png)
+\[
+\text{Seller Score} =
+\left(\frac{\text{Average Review Score}}{5} \times 50\right)
++
+\left(1 - \frac{\text{Late Deliveries}}{\text{Delivered Orders}}\right) \times 50
+\]
 
-Congratulation on successfully creating S3 interface endpoint. In the next step, we will test the interface endpoint.
+As a result:
+
+- A seller with excellent customer ratings and no late deliveries can achieve a maximum score of **100**.
+- Sellers with lower review scores or higher late delivery rates will receive proportionally lower scores.
+
+![Seller Score Calculation](image.png)

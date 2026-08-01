@@ -1,18 +1,38 @@
 ---
-title : "Introduction"
-date : 2026-07-20 
-weight : 1 
-chapter : false
-pre : " <b> 5.1. </b> "
+title: "Introduction"
+date: 2026-07-20
+weight: 1
+chapter: false
+pre: " <b> 5.1. </b> "
 ---
 
-#### VPC endpoints
-+ **VPC endpoints** are virtual devices. They are horizontally scaled, redundant, and highly available VPC components. They allow communication between your compute resources and AWS services without imposing availability risks.
-+ Compute resources running in VPC can access  **Amazon S3**  using a Gateway endpoint. PrivateLink interface endpoints can be used by compute resources running in VPC or on-premises.
+## 1. Workshop Objectives
 
-#### Workshop overview
-In this workshop, you will use two VPCs. 
-+ **"VPC Cloud"** is for cloud resources such as a  **Gateway endpoint** and an EC2 instance to test with. 
-+ **"VPC On-Prem"** simulates an on-premises environment such as a factory or corporate datacenter. An EC2 instance running strongSwan VPN software has been deployed in "VPC On-prem" and automatically configured to establish a Site-to-Site VPN tunnel with AWS Transit Gateway. This VPN simulates connectivity from an on-premises location to the AWS cloud. To minimize costs, only one VPN instance is provisioned to support this workshop. When planning VPN connectivity for your production workloads, AWS recommends using multiple VPN devices for high availability.
+After completing this workshop, you will be able to:
 
-![overview](/images/5-Workshop/5.1-Workshop-overview/diagram1.png)
+- Design a data pipeline based on the **ELT (Extract - Load - Transform)** architecture.
+- Integrate **Apache Airflow** to orchestrate the entire workflow automatically.
+- Use **dbt Core** to build data layers, including **Staging**, **Intermediate**, and **Data Marts**.
+- Apply advanced **Data Quality Testing** techniques, such as detecting fanout join issues and validating data integrity.
+
+---
+
+## 2. System Architecture
+
+The data pipeline in this project is organized as follows:
+
+![overview](diagram.png)
+
+![overview](Architecture.png)
+
+---
+
+## 3. Key Components
+
+| Component | Role in the System |
+|-----------|--------------------|
+| PostgreSQL | OLTP database that stores transactional data, including orders, products, and customers. |
+| Amazon S3 | Data Lake for storing raw data in CSV and Parquet formats. |
+| Amazon Redshift | Cloud data warehouse used to store staging tables and Data Mart models. |
+| dbt Core | Performs data transformations, modeling, indexing, layer organization, and data quality testing. |
+| Apache Airflow | Schedules, orchestrates, and monitors the entire data pipeline. |

@@ -6,32 +6,22 @@ chapter : false
 pre : " <b> 5.6. </b> "
 ---
 
-#### Dọn dẹp tài nguyên
+Để tránh phát sinh chi phí ngoài ý muốn trên AWS sau khi hoàn thành Workshop, hãy thực hiện dọn dẹp tài nguyên theo các bước sau:
 
-Xin chúc mừng bạn đã hoàn thành xong lab này!
-Trong lab này, bạn đã học về các mô hình kiến trúc để truy cập Amazon S3 mà không sử dụng Public Internet.
+### Bước 1: Tắt Airflow DAGs
+Vào giao diện Airflow UI ➔ Chuyển trạng thái DAG `ecom_full_pipeline_dag` sang **OFF**.
 
-+ Bằng cách tạo Gateway endpoint, bạn đã cho phép giao tiếp trực tiếp giữa các tài nguyên EC2 và Amazon S3, mà không đi qua Internet Gateway.
-Bằng cách tạo Interface endpoint, bạn đã mở rộng kết nối S3 đến các tài nguyên chạy trên trung tâm dữ liệu trên chỗ của bạn thông qua AWS Site-to-Site VPN hoặc Direct Connect.
+![Airflow Pause DAG](5.6-airflow-off.png)
+---
 
-#### Dọn dẹp
-1. Điều hướng đến Hosted Zones trên phía trái của bảng điều khiển Route 53. Nhấp vào tên của  s3.us-east-1.amazonaws.com zone. Nhấp vào Delete và xác nhận việc xóa bằng cách nhập từ khóa "delete".
+### Bước 2: Xóa Amazon Redshift Cluster
+1. Truy cập **Redshift Console** ➔ Chọn cluster `redshift-ecom-dw`.
+2. Chọn **Actions** ➔ **Delete**.
+3. Bỏ chọn "Create final snapshot" nếu không cần lưu lại ➔ Xác nhận xóa.
 
-![hosted zone](/images/5-Workshop/5.6-Cleanup/delete-zone.png)
+---
 
-2. Disassociate Route 53 Resolver Rule - myS3Rule from "VPC Onprem" and Delete it. 
-
-![hosted zone](/images/5-Workshop/5.6-Cleanup/vpc.png)
-
-4.Mở console của CloudFormation và xóa hai stack CloudFormation mà bạn đã tạo cho bài thực hành này:
-+ PLOnpremSetup
-+ PLCloudSetup
-
-![delete stack](/images/5-Workshop/5.6-Cleanup/delete-stack.png)
-
-5. Xóa các S3 bucket
-
-+ Mở bảng điều khiển S3
-+ Chọn bucket chúng ta đã tạo cho lab, nhấp chuột và xác nhận là empty. Nhấp Delete và xác nhận delete.
-+ 
-![delete s3](/images/5-Workshop/5.6-Cleanup/delete-s3.png)
+### Bước 3: Dọn dẹp S3 Bucket
+1. Truy cập **S3 Console** ➔ Chọn bucket `ecom-raw-data-lake-prod`.
+2. Nhấn **Empty** để xóa toàn bộ file chứa bên trong.
+3. Chọn **Delete** để xóa bucket hoàn toàn.

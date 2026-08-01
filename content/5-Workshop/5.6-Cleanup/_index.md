@@ -1,32 +1,31 @@
 ---
-title : "Clean up"
-date : 2026-07-28
-weight : 6
-chapter : false
-pre : " <b> 5.6. </b> "
+title: "Resource Cleanup"
+date: 2026-07-28
+weight: 6
+chapter: false
+pre: " <b> 5.6. </b> "
 ---
-Congratulations on completing this workshop! 
-In this workshop, you learned architecture patterns for accessing Amazon S3 without using the Public Internet. 
-+ By creating a gateway endpoint, you enabled direct communication between EC2 resources and Amazon S3, without traversing an Internet Gateway. 
-+ By creating an interface endpoint you extended S3 connectivity to resources running in your on-premises data center via AWS Site-to-Site VPN or Direct Connect. 
 
-#### clean up
-1. Navigate to Hosted Zones on the left side of Route 53 console. Click the name of *s3.us-east-1.amazonaws.com* zone. Click Delete and confirm deletion by typing delete. 
+To avoid unexpected AWS charges after completing this workshop, clean up your cloud resources by following the steps below.
 
-![hosted zone](/images/5-Workshop/5.6-Cleanup/delete-zone.png)
+### Step 1: Disable the Airflow DAG
 
-2. Disassociate the Route 53 Resolver Rule - myS3Rule from "VPC Onprem" and Delete it. 
+Open the Airflow Web UI and switch the `ecom_full_pipeline_dag` to **OFF**.
 
-![hosted zone](/images/5-Workshop/5.6-Cleanup/vpc.png)
+![Airflow Pause DAG](5.6-airflow-off.png)
 
-4. Open the CloudFormation console  and delete the two CloudFormation Stacks that you created for this lab:
-+ PLOnpremSetup
-+ PLCloudSetup
+---
 
-![delete stack](/images/5-Workshop/5.6-Cleanup/delete-stack.png)
+### Step 2: Delete the Amazon Redshift Cluster
 
-5. Delete S3 buckets
-+ Open S3 console
-+ Choose the bucket we created for the lab, click and confirm empty. Click delete and confirm delete.
+1. Open the **Amazon Redshift Console** and select the `redshift-ecom-dw` cluster.
+2. Choose **Actions** → **Delete**.
+3. If you do not need to retain the data, uncheck **Create final snapshot**, then confirm the deletion.
 
-![delete s3](/images/5-Workshop/5.6-Cleanup/delete-s3.png)
+---
+
+### Step 3: Clean Up the Amazon S3 Bucket
+
+1. Open the **Amazon S3 Console** and select the `ecom-raw-data-lake-prod` bucket.
+2. Choose **Empty** to remove all objects stored in the bucket.
+3. After the bucket is empty, choose **Delete** to permanently remove the bucket.
