@@ -1,5 +1,5 @@
 ---
-title : "5.4.1 - Chuẩn bị Tầng Staging (Ingestion & Staging Models)"
+title : "Chuẩn bị Tầng Staging (Ingestion & Staging Models)"
 date : 2026-07-23
 weight : 1
 chapter : false
