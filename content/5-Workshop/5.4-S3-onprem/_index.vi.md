@@ -1,5 +1,5 @@
 ---
-title : "5.4 - Triển khai Pipeline ELT & Transformations"
+title : "Triển khai Pipeline ELT & Transformations"
 date : 2026-07-23 
 weight : 4 
 chapter : false

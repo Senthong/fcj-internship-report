@@ -1,4 +1,3 @@
-````markdown id="7nsl92"
 ---
 title: "Airflow Orchestration & Data Quality Testing"
 date: 2026-07-24

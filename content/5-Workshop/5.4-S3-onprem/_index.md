@@ -1,5 +1,5 @@
 ---
-title: "5.4 - Implementing the ELT Pipeline & Data Transformations"
+title: "Implementing the ELT Pipeline & Data Transformations"
 date: 2026-07-23
 weight: 4
 chapter: false

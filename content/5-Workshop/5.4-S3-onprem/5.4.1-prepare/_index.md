@@ -1,4 +1,3 @@
-````markdown
 ---
 title: "5.4.1 - Preparing the Staging Layer (Ingestion & Staging Models)"
 date: 2026-07-23
