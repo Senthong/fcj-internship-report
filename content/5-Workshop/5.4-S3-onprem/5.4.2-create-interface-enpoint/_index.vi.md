@@ -1,5 +1,5 @@
 ---
-title : "Xây dựng Tầng Data Mart (Data Mart Models)"
+title : "5.4.2 - Xây dựng Tầng Data Mart (Data Mart Models)"
 date : 2026-07-23
 weight : 2
 chapter : false
@@ -29,6 +29,17 @@ Model này có hạt dữ liệu (grain) là một dòng cho mỗi ngày (`order
 
 ```sql
 -- models/mart/finance/revenue_daily.sql
+-- 
+-- Daily GMV (Gross Merchandise Value) report.
+-- Joins orders + order_items + payments to get true revenue per day.
+-- Materialized as TABLE on Redshift with sort/dist keys for fast BI queries.
+--
+-- Key metrics:
+--   gmv         — sum of item prices (pre-freight)
+--   total_revenue — gmv + freight
+--   avg_order_value — revenue / distinct orders
+--   cancellation_rate — % orders canceled that day
+
 {{
     config(
         materialized='table',
@@ -42,26 +53,32 @@ with orders as (
     select * from {{ ref('stg_orders') }}
     where order_date >= '{{ var("start_date") }}'
 ),
+
 items as (
     select * from {{ ref('stg_order_items') }}
 ),
+
 payments as (
     select
         order_id,
         sum(payment_value)    as total_payment_value,
-        max(payment_type)     as primary_payment_type
+        max(payment_type)     as primary_payment_type   -- simplification for 1-row-per-order
     from {{ ref('stg_order_payments') }}
     group by 1
 ),
 
 order_revenue as (
     select
-        o.order_id, o.order_date, o.order_status,
-        o.is_delivered, o.is_late_delivery,
-        sum(i.item_price)            as gmv,
-        sum(i.freight_value)         as freight_revenue,
-        sum(i.total_item_revenue)    as gross_revenue,
-        count(i.order_item_id)       as item_count,
+        o.order_id,
+        o.order_date,
+        o.order_status,
+        o.is_delivered,
+        o.is_late_delivery,
+        sum(i.item_price)           as gmv,
+        sum(i.freight_value)        as freight_revenue,
+        sum(i.total_item_revenue)   as gross_revenue,
+        count(distinct i.product_id) as distinct_products,
+        count(i.order_item_id)      as item_count,
         p.total_payment_value,
         p.primary_payment_type
     from orders o
@@ -73,21 +90,46 @@ order_revenue as (
 daily_aggregated as (
     select
         order_date,
+
+        -- Volume
         count(distinct order_id)                                as total_orders,
         count(distinct case when is_delivered then order_id end) as delivered_orders,
         count(distinct case when order_status = 'canceled'
-                             then order_id end)                  as canceled_orders,
+                           then order_id end)                   as canceled_orders,
+
+        -- Revenue
         round(sum(gmv), 2)                                      as gmv,
+        round(sum(freight_revenue), 2)                          as freight_revenue,
         round(sum(gross_revenue), 2)                            as total_revenue,
         round(avg(gross_revenue), 2)                            as avg_order_value,
-        round(100.0 * count(distinct case when is_late_delivery then order_id end)
-              / nullif(count(distinct case when is_delivered then order_id end), 0), 2)
-                                                                 as late_delivery_pct,
-        round(100.0 * count(distinct case when order_status = 'canceled'
-                                            then order_id end)
-              / nullif(count(distinct order_id), 0), 2)         as cancellation_rate_pct,
+
+        -- Delivery quality
+        round(
+            100.0 * count(distinct case when is_late_delivery then order_id end)
+            / nullif(count(distinct case when is_delivered then order_id end), 0),
+            2
+        )                                                       as late_delivery_pct,
+
+        -- Cancellation rate
+        round(
+            100.0 * count(distinct case when order_status = 'canceled'
+                                        then order_id end)
+            / nullif(count(distinct order_id), 0),
+            2
+        )                                                       as cancellation_rate_pct,
+
+        -- Items
         sum(item_count)                                         as total_items_sold,
+        round(avg(item_count), 2)                               as avg_items_per_order,
+
+        -- Payment mix
+        sum(case when primary_payment_type = 'credit_card'
+                 then 1 else 0 end)                             as orders_credit_card,
+        sum(case when primary_payment_type = 'boleto'
+                 then 1 else 0 end)                             as orders_boleto,
+
         current_timestamp                                       as dbt_updated_at
+
     from order_revenue
     group by 1
 )
@@ -95,6 +137,8 @@ daily_aggregated as (
 select * from daily_aggregated
 order by order_date
 ```
+
+Bên cạnh các chỉ số tổng hợp cơ bản (GMV, tổng doanh thu, giá trị đơn trung bình), model còn tách riêng doanh thu phí vận chuyển (`freight_revenue`), số mặt hàng trung bình mỗi đơn (`avg_items_per_order`) và cơ cấu phương thức thanh toán theo hai hình thức phổ biến nhất tại thị trường Brazil - thẻ tín dụng và boleto (hình thức thanh toán qua hóa đơn ngân hàng) - dưới dạng hai cột đếm `orders_credit_card` và `orders_boleto`.
 
 Điểm kỹ thuật quan trọng nhất của model này nằm ở cách xử lý quan hệ một-nhiều giữa đơn hàng và thanh toán. Trong dữ liệu Olist, một đơn hàng có thể được thanh toán qua nhiều dòng (ví dụ trả góp nhiều đợt), nên nếu JOIN trực tiếp bảng `stg_order_payments` vào cấp độ dòng của `stg_order_items` mà không tổng hợp trước, mỗi mặt hàng trong đơn sẽ bị nhân bản theo đúng số dòng thanh toán tương ứng - đây chính là hiện tượng fanout join đã nêu ở mục 5.1. Model giải quyết vấn đề này bằng cách tổng hợp `payments` về đúng một dòng cho mỗi `order_id` **trước khi** JOIN, sau đó gộp tiếp `items` về cấp độ đơn hàng trong CTE `order_revenue`. Kết quả là mỗi đơn hàng chỉ đóng góp đúng một dòng khi tính tổng doanh thu ở CTE `daily_aggregated`, bất kể đơn đó có bao nhiêu mặt hàng hay bao nhiêu lượt thanh toán.
 
@@ -104,6 +148,8 @@ Model này có hạt dữ liệu là một dòng cho mỗi cặp (tháng, danh m
 
 ```sql
 -- models/mart/finance/category_revenue_monthly.sql
+-- Monthly revenue breakdown by product category (English name)
+
 {{
     config(
         materialized='table',
@@ -115,11 +161,13 @@ Model này có hạt dữ liệu là một dòng cho mỗi cặp (tháng, danh m
 with items as (
     select * from {{ ref('stg_order_items') }}
 ),
+
 orders as (
     select * from {{ ref('stg_orders') }}
     where order_date >= '{{ var("start_date") }}'
       and order_status not in ('canceled', 'unavailable')
 ),
+
 products as (
     select * from {{ ref('stg_products') }}
 ),
@@ -131,7 +179,8 @@ joined as (
         count(distinct o.order_id)                  as order_count,
         count(i.order_item_id)                      as items_sold,
         round(sum(i.item_price), 2)                 as total_gmv,
-        round(avg(i.item_price), 2)                 as avg_item_price
+        round(avg(i.item_price), 2)                 as avg_item_price,
+        round(sum(i.freight_value), 2)              as total_freight
     from items i
     join orders o   on i.order_id  = o.order_id
     join products p on i.product_id = p.product_id
@@ -162,6 +211,12 @@ Một điểm cần lưu ý về dữ liệu Olist: mỗi đơn hàng gắn vớ
 
 ```sql
 -- models/mart/customers/fct_customer_cohorts.sql
+-- 
+-- Monthly cohort retention analysis.
+-- For each cohort (month of first purchase), tracks how many customers
+-- purchased again in subsequent months (M+1, M+2, ...).
+-- Classic retention table used in e-commerce analytics.
+
 {{
     config(
         materialized='table',
@@ -174,52 +229,64 @@ Một điểm cần lưu ý về dữ liệu Olist: mỗi đơn hàng gắn vớ
 with customers as (
     select * from {{ ref('stg_customers') }}
 ),
+
 orders as (
     select * from {{ ref('stg_orders') }}
     where order_date >= '{{ var("start_date") }}'
       and order_status not in ('canceled', 'unavailable')
 ),
 
--- Quy đổi mỗi đơn hàng về đúng một khách hàng thực (customer_unique_id)
+-- Map each order to the unique customer (not per-order customer_id)
 customer_orders as (
     select
         c.customer_unique_id,
         o.order_date,
-        date_trunc('month', o.order_date)::date as order_month,
+        date_trunc('month', o.order_date)::date     as order_month,
         o.order_id
     from orders o
     join customers c on o.customer_id = c.customer_id
 ),
 
--- Tháng phát sinh đơn hàng đầu tiên của mỗi khách hàng = cohort_month
+-- First order date per unique customer
 first_orders as (
     select
         customer_unique_id,
-        min(order_month) as cohort_month
+        min(order_month)    as cohort_month,
+        min(order_date)     as first_order_date
     from customer_orders
     group by 1
 ),
 
--- Với mỗi lượt mua, tính số tháng đã trôi qua kể từ đơn hàng đầu tiên
+-- Join back to get months since first order for each subsequent purchase
 customer_activity as (
     select
         co.customer_unique_id,
         fo.cohort_month,
-        datediff('month', fo.cohort_month, co.order_month) as months_since_first_order
+        co.order_month,
+        datediff(
+            'month',
+            fo.cohort_month,
+            co.order_month
+        )                   as months_since_first_order
     from customer_orders co
     join first_orders fo on co.customer_unique_id = fo.customer_unique_id
 ),
 
+-- Cohort size (how many unique customers acquired per month)
 cohort_sizes as (
-    select cohort_month, count(distinct customer_unique_id) as cohort_size
+    select
+        cohort_month,
+        count(distinct customer_unique_id)  as cohort_size
     from first_orders
     group by 1
 ),
 
+-- Retained customers per cohort-month combination
 retention_counts as (
     select
-        cohort_month, months_since_first_order,
-        count(distinct customer_unique_id) as retained_customers
+        cohort_month,
+        months_since_first_order,
+        count(distinct customer_unique_id)  as retained_customers
     from customer_activity
     group by 1, 2
 ),
@@ -230,11 +297,14 @@ final as (
         cs.cohort_size,
         rc.months_since_first_order,
         rc.retained_customers,
-        round(100.0 * rc.retained_customers / cs.cohort_size, 2) as retention_rate_pct,
-        current_timestamp as dbt_updated_at
+        round(
+            100.0 * rc.retained_customers / cs.cohort_size,
+            2
+        )                                   as retention_rate_pct,
+        current_timestamp                   as dbt_updated_at
     from retention_counts rc
     join cohort_sizes cs on rc.cohort_month = cs.cohort_month
-    where rc.months_since_first_order <= 12
+    where rc.months_since_first_order <= 12   -- track up to 12 months
 )
 
 select * from final
@@ -249,6 +319,10 @@ Model này tổng hợp ba khía cạnh hiệu suất của từng người bán
 
 ```sql
 -- models/mart/operations/seller_performance.sql
+-- 
+-- Seller-level performance scorecard.
+-- Aggregates revenue, order count, avg review score, late delivery rate.
+
 {{
     config(
         materialized='table',
@@ -260,52 +334,54 @@ Model này tổng hợp ba khía cạnh hiệu suất của từng người bán
 with sellers as (
     select * from {{ ref('stg_sellers') }}
 ),
+
 items as (
     select * from {{ ref('stg_order_items') }}
 ),
+
 orders as (
     select * from {{ ref('stg_orders') }}
     where order_date >= '{{ var("start_date") }}'
 ),
+
 reviews as (
     select * from {{ ref('stg_order_reviews') }}
 ),
 
--- Doanh thu theo từng người bán
+-- revenue per seller
 seller_revenue as (
     select
         i.seller_id,
-        count(distinct i.order_id)     as total_orders,
-        count(i.order_item_id)         as total_items_sold,
-        round(sum(i.item_price), 2)    as total_gmv,
-        round(avg(i.item_price), 2)    as avg_item_price,
-        min(o.order_date)              as first_order_date,
-        max(o.order_date)              as last_order_date
+        count(distinct i.order_id)          as total_orders,
+        count(i.order_item_id)              as total_items_sold,
+        round(sum(i.item_price), 2)         as total_gmv,
+        round(avg(i.item_price), 2)         as avg_item_price,
+        round(sum(i.freight_value), 2)      as total_freight,
+        min(o.order_date)                  as first_order_date,
+        max(o.order_date)                  as last_order_date
     from items i
     join orders o on i.order_id = o.order_id
     group by 1
 ),
 
--- Điểm đánh giá theo từng người bán
+-- review scores per seller
 seller_reviews as (
     select
         i.seller_id,
-        round(avg(r.review_score), 2)  as avg_review_score,
-        count(distinct r.review_id)    as total_reviews,
-        count(distinct case when r.sentiment = 'negative'
-                             then r.review_id end) as negative_reviews
+        round(avg(r.review_score), 2)       as avg_review_score,
+        count(distinct r.review_id)         as total_reviews,
+        count(distinct case when r.sentiment = 'negative' then r.review_id end) as negative_reviews
     from items i
     join reviews r on i.order_id = r.order_id
     group by 1
 ),
 
--- Chất lượng giao hàng theo từng người bán
+-- delivery performance per seller (sửa lại đếm distinct order_id)
 seller_delivery as (
     select
         i.seller_id,
         count(distinct o.order_id) as delivered_orders,
-        count(distinct case when o.is_late_delivery
-                             then o.order_id end) as late_deliveries
+        count(distinct case when o.is_late_delivery then o.order_id end) as late_deliveries
     from items i
     join orders o on i.order_id = o.order_id
     where o.is_delivered = true
@@ -318,26 +394,40 @@ final as (
         s.city                                              as seller_city,
         s.state_code                                        as seller_state,
 
+        -- Revenue
         coalesce(r.total_orders, 0)                         as total_orders,
+        coalesce(r.total_items_sold, 0)                     as total_items_sold,
         coalesce(r.total_gmv, 0)                             as total_gmv,
+        coalesce(r.avg_item_price, 0)                       as avg_item_price,
+        r.first_order_date,
+        r.last_order_date,
 
+        -- Reviews
         coalesce(rv.avg_review_score, 0)                    as avg_review_score,
         coalesce(rv.total_reviews, 0)                       as total_reviews,
-        round(100.0 * coalesce(rv.negative_reviews, 0)
-              / nullif(coalesce(rv.total_reviews, 0), 0), 2) as negative_review_pct,
-
-        round(100.0 * coalesce(d.late_deliveries, 0)
-              / nullif(coalesce(d.delivered_orders, 0), 0), 2) as late_delivery_pct,
-
-        -- Seller Score: trọng số 50% đánh giá khách hàng + 50% tỷ lệ giao đúng hạn
         round(
-            (coalesce(rv.avg_review_score, 3) / 5.0 * 50)
-            + (1.0 - coalesce(d.late_deliveries, 0)::float
-                / nullif(coalesce(d.delivered_orders, 1), 0)) * 50,
+            100.0 * coalesce(rv.negative_reviews, 0)
+            / nullif(coalesce(rv.total_reviews, 0), 0),
+            2
+        )                                                   as negative_review_pct,
+
+        -- Delivery
+        round(
+            100.0 * coalesce(d.late_deliveries, 0)
+            / nullif(coalesce(d.delivered_orders, 0), 0),
+            2
+        )                                                   as late_delivery_pct,
+
+        -- Composite score: simple weighted rank signal (0–100)
+        round(
+            (coalesce(rv.avg_review_score, 3) / 5.0 * 50)   -- 50% weight on reviews
+            + (1.0 - coalesce(d.late_deliveries, 0)::float 
+                / nullif(coalesce(d.delivered_orders, 1), 0)) * 50,  -- 50% on on-time
             1
-        )                                                    as seller_score,
+        )                                                   as seller_score,
 
         current_timestamp                                   as dbt_updated_at
+
     from sellers s
     left join seller_revenue  r  on s.seller_id = r.seller_id
     left join seller_reviews  rv on s.seller_id = rv.seller_id

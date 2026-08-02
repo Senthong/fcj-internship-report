@@ -1,5 +1,5 @@
 ---
-title : "Chuẩn bị Tầng Staging (Ingestion & Staging Models)"
+title : "5.4.1 - Chuẩn bị Tầng Staging (Ingestion & Staging Models)"
 date : 2026-07-23
 weight : 1
 chapter : false
@@ -124,45 +124,66 @@ Sau khi dữ liệu thô đã nằm trong schema `staging`, dbt đảm nhận ph
 
 ```sql
 -- models/staging/stg_orders.sql
+-- 
+-- Cleans and standardises the raw_orders table.
+-- Applies type casting, null handling, and adds derived columns.
+-- Materialized as view (cheap, always fresh).
+
 with source as (
     select * from {{ source('olist_raw', 'raw_orders') }}
 ),
+
 cleaned as (
     select
+        -- Keys
         order_id,
         customer_id,
-        lower(trim(order_status))                          as order_status,
 
-        order_purchase_timestamp::timestamp                as ordered_at,
-        order_approved_at::timestamp                        as approved_at,
-        order_delivered_carrier_date::timestamp             as shipped_at,
-        order_delivered_customer_date::timestamp            as delivered_at,
-        order_estimated_delivery_date::timestamp            as estimated_delivery_at,
+        -- Enums
+        lower(trim(order_status))                         as order_status,
 
-        date_trunc('day', order_purchase_timestamp)::date   as order_date,
-        date_trunc('week', order_purchase_timestamp)::date  as order_week,
+        -- Timestamps — cast and normalise
+        order_purchase_timestamp::timestamp               as ordered_at,
+        order_approved_at::timestamp                      as approved_at,
+        order_delivered_carrier_date::timestamp           as shipped_at,
+        order_delivered_customer_date::timestamp          as delivered_at,
+        order_estimated_delivery_date::timestamp          as estimated_delivery_at,
+
+        -- Derived
+        date_trunc('day', order_purchase_timestamp)::date as order_date,
+        date_trunc('week', order_purchase_timestamp)::date as order_week,
         date_trunc('month', order_purchase_timestamp)::date as order_month,
 
+        -- Is the order actually delivered?
         case
             when lower(order_status) = 'delivered'
              and order_delivered_customer_date is not null
-            then true else false
-        end                                                 as is_delivered,
+            then true
+            else false
+        end                                               as is_delivered,
 
+        -- Was delivery late?
         case
             when order_delivered_customer_date is not null
              and order_estimated_delivery_date is not null
              and order_delivered_customer_date > order_estimated_delivery_date
-            then true else false
-        end                                                 as is_late_delivery,
+            then true
+            else false
+        end                                               as is_late_delivery,
 
-        datediff('day', order_estimated_delivery_date,
-                  order_delivered_customer_date)             as days_late,
+        -- Days late (negative = early)
+        datediff(
+            'day',
+            order_estimated_delivery_date,
+            order_delivered_customer_date
+        )                                                 as days_late,
 
         _loaded_at
+
     from source
     where order_id is not null
 )
+
 select * from cleaned
 ```
 
@@ -181,14 +202,20 @@ translations as (
 joined as (
     select
         p.product_id,
-        coalesce(t.product_category_name_english, 'uncategorized') as category_en,
-        p.product_category_name                                     as category_pt,
+        coalesce(t.product_category_name_english, 'uncategorized')  as category_en,
+        p.product_category_name                                      as category_pt,
+        p.product_name_length,
+        p.product_description_length,
+        p.product_photos_qty,
         p.product_weight_g,
         p.product_length_cm,
         p.product_height_cm,
         p.product_width_cm,
-        round((p.product_length_cm * p.product_height_cm * p.product_width_cm) / 5.0, 2)
-                                                                     as volumetric_weight_g
+        -- volumetric weight in grams (L*H*W / 5000 * 1000)
+        round(
+            (p.product_length_cm * p.product_height_cm * p.product_width_cm) / 5.0,
+            2
+        )                                                            as volumetric_weight_g
     from products p
     left join translations t
         on p.product_category_name = t.product_category_name

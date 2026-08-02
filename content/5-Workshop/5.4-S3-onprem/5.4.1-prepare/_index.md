@@ -1,31 +1,19 @@
+````markdown
 ---
-title: "Preparing the Staging Layer (Ingestion & Staging Models)"
+title: "5.4.1 - Preparing the Staging Layer (Ingestion & Staging Models)"
 date: 2026-07-23
 weight: 1
 chapter: false
 pre: " <b> 5.4.1 </b> "
 ---
 
-This section presents two sequential stages of the ELT workflow. First, raw data is loaded from Amazon S3 into the `staging` schema of Amazon Redshift. Second, **dbt Core** transforms these raw tables into a collection of **Staging Models**, which serve as the single source of truth referenced by all Data Mart models in Section 5.4.2 through dbt's `ref()` function.
+This section describes two sequential processes. First, the mechanism for loading raw data from Amazon S3 into the `staging` schema on Amazon Redshift. Second, how dbt Core standardizes these raw tables into a collection of **Staging Models**—the single intermediate layer that all Data Mart models in Section 5.4.2 reference through the `ref()` function. Separating these two steps (loading raw data unchanged, then cleaning and transforming it with SQL) reflects the essence of the ELT architecture introduced in Section 5.1: all data transformations are performed inside Redshift rather than in an external processing layer.
 
-Separating these two steps—loading raw data without modification and then performing transformations entirely within the data warehouse—captures the essence of the ELT architecture introduced in Section 5.1. Amazon Redshift, rather than an external processing layer, is responsible for all transformation logic.
+## 1. Loading Raw Data into Redshift Using the COPY Command
 
-## 1. Loading Raw Data into Amazon Redshift Using the `COPY` Command
+The data loading process is not performed manually. Instead, it is handled by the `ingestion/load_to_redshift.py` script, which is executed by the Airflow task `load_staging_to_redshift` (described in detail in Section 5.4.3). Rather than reading CSV files and inserting rows one by one, the script leverages Redshift's `COPY` command—the most efficient bulk-loading mechanism available on the platform. `COPY` takes advantage of Redshift's Massively Parallel Processing (MPP) architecture by allowing multiple compute nodes to read data directly from Amazon S3 in parallel.
 
-Data loading is fully automated through the script `ingestion/load_to_redshift.py`, which is executed by the Airflow task `load_staging_to_redshift` (described in Section 5.4.3).
-
-Instead of reading CSV files row by row and performing individual inserts, the script leverages Amazon Redshift's native **`COPY`** command. This is the most efficient loading mechanism because it takes advantage of Redshift's massively parallel processing (MPP) architecture to read data directly from Amazon S3 across multiple compute nodes simultaneously.
-
-All eight raw tables are centrally defined as a collection of **`TableSpec`** Python dataclass objects. Each specification includes:
-
-- Source CSV filename
-- Destination table name
-- Column mapping
-- `CREATE TABLE` statement
-- Optional distribution key (`DISTKEY`)
-- Optional sort key (`SORTKEY`)
-
-This design allows new source tables to be added simply by defining another `TableSpec`, without modifying the loading logic.
+All eight raw tables are defined centrally as a list of `TableSpec` objects (a Python dataclass). Each object specifies the source CSV file, destination table name, column definitions, the `CREATE TABLE` statement, and optional distribution (`DISTKEY`) and sort (`SORTKEY`) keys optimized for Redshift. This design makes adding a new source table straightforward: only a new `TableSpec` definition is required, without modifying the loading logic itself.
 
 ```python
 # ingestion/load_to_redshift.py
@@ -50,7 +38,7 @@ TABLE_SPECS = [
         dist_key="order_id",
         ddl="""
         CREATE TABLE IF NOT EXISTS {schema}.raw_orders (
-            order_id                       VARCHAR(64) NOT NULL,
+            order_id                       VARCHAR(64)  NOT NULL,
             customer_id                    VARCHAR(64),
             order_status                   VARCHAR(50),
             order_purchase_timestamp       TIMESTAMP,
@@ -64,47 +52,32 @@ TABLE_SPECS = [
         SORTKEY(order_purchase_timestamp);
         """,
     ),
-    # ... remaining TableSpec definitions
+    # ... Remaining 7 TableSpec objects:
+    #     raw_customers, raw_order_items,
+    #     raw_order_payments, raw_order_reviews,
+    #     raw_products, raw_sellers,
+    #     raw_category_translation
 ]
-```
+````
 
-The following table summarizes the eight raw tables loaded into the `staging` schema.
+The following table summarizes all eight raw tables created and loaded into the `staging` schema:
 
-| Destination Table | Source CSV | Distribution Strategy | Notes |
-| :--- | :--- | :--- | :--- |
-| `raw_orders` | `olist_orders_dataset.csv` | `DISTKEY(order_id)` | Sorted by `order_purchase_timestamp` to optimize time-based queries |
-| `raw_order_items` | `olist_order_items_dataset.csv` | `DISTKEY(order_id)` | One row per order item |
-| `raw_customers` | `olist_customers_dataset.csv` | `DISTKEY(customer_id)` | Distributed and sorted by customer identifier |
-| `raw_sellers` | `olist_sellers_dataset.csv` | `DISTSTYLE ALL` | Small dimension table replicated across all nodes for faster joins |
-| `raw_products` | `olist_products_dataset.csv` | `DISTSTYLE ALL` | Small dimension table |
-| `raw_order_payments` | `olist_order_payments_dataset.csv` | `DISTKEY(order_id)` | Orders may contain multiple payment records |
-| `raw_order_reviews` | `olist_order_reviews_dataset.csv` | `DISTKEY(order_id)` | Customer review information |
-| `raw_category_translation` | `product_category_name_translation.csv` | `DISTSTYLE ALL` | Lookup table for Portuguese-to-English category translation |
+| Destination Table          | Source CSV File                         | Distribution Strategy  | Notes                                                               |
+| :------------------------- | :-------------------------------------- | :--------------------- | :------------------------------------------------------------------ |
+| `raw_orders`               | `olist_orders_dataset.csv`              | `DISTKEY(order_id)`    | Sorted by `order_purchase_timestamp` to optimize time-based queries |
+| `raw_order_items`          | `olist_order_items_dataset.csv`         | `DISTKEY(order_id)`    | One record per order item                                           |
+| `raw_customers`            | `olist_customers_dataset.csv`           | `DISTKEY(customer_id)` | Both distributed and sorted by `customer_id`                        |
+| `raw_sellers`              | `olist_sellers_dataset.csv`             | `DISTSTYLE ALL`        | Small dimension table replicated across all nodes for faster joins  |
+| `raw_products`             | `olist_products_dataset.csv`            | `DISTSTYLE ALL`        | Small dimension table replicated across all nodes                   |
+| `raw_order_payments`       | `olist_order_payments_dataset.csv`      | `DISTKEY(order_id)`    | An order may contain multiple payment records (e.g., installments)  |
+| `raw_order_reviews`        | `olist_order_reviews_dataset.csv`       | `DISTKEY(order_id)`    |                                                                     |
+| `raw_category_translation` | `product_category_name_translation.csv` | `DISTSTYLE ALL`        | Lookup table used to translate product category names               |
 
-Each table includes an additional metadata column:
+Each table includes an additional `_loaded_at TIMESTAMP DEFAULT GETDATE()` column. This column is referenced as the `loaded_at_field` in `sources.yml`, enabling dbt to perform source freshness checks with a warning threshold of 25 hours and an error threshold of 49 hours after the most recent load. These thresholds are intentionally set slightly longer than the daily pipeline schedule, allowing a delayed execution without immediately flagging the source as stale.
 
-```sql
-_loaded_at TIMESTAMP DEFAULT GETDATE()
-```
+One notable design decision is that the above list **does not include** the geolocation dataset (`olist_geolocation_dataset.csv`), even though this file is still downloaded and uploaded to Amazon S3 by the `ingestion/ingest_olist_to_s3.py` script. This omission is intentional rather than accidental. The geolocation dataset is relatively large but is rarely used directly by the Data Mart models described in Section 5.4.2. Therefore, it remains in the Bronze layer on Amazon S3 and is queried on demand through AWS Glue Crawler and Amazon Athena, as introduced in Section 5.1, instead of consuming additional Redshift storage and loading resources.
 
-This column is referenced as `loaded_at_field` in `sources.yml`, enabling dbt freshness checks with:
-
-- **Warning threshold:** 25 hours
-- **Error threshold:** 49 hours
-
-These thresholds intentionally exceed the daily pipeline schedule to avoid false alerts when a scheduled execution is delayed.
-
-One notable design decision is that **`olist_geolocation_dataset.csv` is intentionally excluded** from the Redshift loading process.
-
-Although this dataset is downloaded from Kaggle and uploaded to Amazon S3 by `ingestion/ingest_olist_to_s3.py`, it remains in the Bronze layer because:
-
-- It is considerably larger than the other datasets.
-- It is not directly required by the Data Mart models.
-- It can instead be queried on demand using AWS Glue and Amazon Athena, as described in Section 5.1.
-
-This avoids unnecessary Redshift storage and loading costs.
-
-Each table is refreshed using a **TRUNCATE followed by COPY** strategy rather than incremental loading.
+From a loading perspective, each table follows a **TRUNCATE followed by COPY** strategy (full refresh) rather than incremental loading:
 
 ```python
 def truncate_and_load(cursor, spec: TableSpec, s3_prefix: str, schema: str = STAGING_SCHEMA):
@@ -131,89 +104,96 @@ def truncate_and_load(cursor, spec: TableSpec, s3_prefix: str, schema: str = STA
     cursor.execute(copy_sql)
 ```
 
-Using **TRUNCATE + COPY** is appropriate because the Olist dataset is static and relatively small (slightly over 100,000 orders). Reloading the entire dataset each day is inexpensive while keeping the loading logic simple and deterministic.
+Using a full-refresh approach (`TRUNCATE + COPY`) instead of incremental loading is appropriate for the Olist dataset, which is static and relatively small (approximately 100,000 orders). Reloading the entire dataset daily incurs minimal cost while significantly simplifying the ingestion logic and making the process easier to validate. The loading of all eight tables is wrapped within a single database transaction (`conn.autocommit = False`). If loading any table fails, `conn.rollback()` is executed, ensuring that the entire transaction is rolled back and preventing the `staging` schema from ending up in a partially updated state.
 
-The loading of all eight tables is executed within a single database transaction (`conn.autocommit = False`). If loading any table fails, `conn.rollback()` is executed so that the `staging` schema is never left in a partially updated state.
+For authentication, the `_auth_clause()` function prioritizes using an `IAM_ROLE`—the same IAM Role provisioned by Terraform and attached to the Redshift Namespace in Section 5.3.1. Static AWS Access Key and Secret Key credentials are used only as a fallback option. This approach aligns with the principle of least privilege discussed in Section 5.2: because the `COPY` command executes inside Redshift, it can assume temporary permissions through the attached IAM Role without embedding long-lived credentials.
 
-Authentication to Amazon S3 is handled through the `_auth_clause()` helper function, which prioritizes the IAM Role attached to the Redshift Namespace (configured in Section 5.3.1). Static AWS credentials are used only as a fallback. This implementation follows the principle of least privilege by allowing Redshift to assume temporary service credentials rather than embedding long-lived access keys.
+![Running load\_to\_redshift.py](image-1.png)
+````markdown
+## 2. Defining the dbt Staging Models
 
-![Running `load_to_redshift.py`](image-1.png)
+Once the raw data has been loaded into the `staging` schema, dbt takes over the remainder of the Silver layer by standardizing data types, renaming columns according to consistent naming conventions, filtering invalid records, and deriving additional fields that are directly consumed by the Data Mart models. The project defines **seven Staging Models**, each corresponding to a raw table, located under `models/staging/` and following the naming convention `stg_<entity_name>`.
 
----
-
-## 2. Defining dbt Staging Models
-
-Once the raw data has been loaded into the `staging` schema, dbt performs the remaining transformations that constitute the **Silver** layer. These transformations include:
-
-- Standardizing data types
-- Renaming columns using consistent conventions
-- Filtering invalid records
-- Computing derived columns that are reused throughout the Data Mart layer
-
-The project defines **seven Staging Models**, located under `models/staging/` and following the naming convention `stg_<entity>`.
-
-| Model | Source | Primary Transformations |
+| Model | Source (`source`) | Main Transformation Logic |
 | :--- | :--- | :--- |
-| `stg_customers` | `raw_customers` | Standardizes ZIP codes using `lpad`, capitalizes city names, converts state abbreviations to uppercase |
+| `stg_customers` | `raw_customers` | Standardizes postal codes to 8 characters using `lpad`, capitalizes city names, and converts state codes to uppercase |
 | `stg_sellers` | `raw_sellers` | Applies the same address normalization rules as `stg_customers` |
-| `stg_order_items` | `raw_order_items` | Casts price and freight values to `DECIMAL(10,2)`, calculates `total_item_revenue`, removes negative values |
-| `stg_order_payments` | `raw_order_payments` | Converts payment types to lowercase and removes negative payment amounts |
-| `stg_order_reviews` | `raw_order_reviews` | Categorizes review scores as positive, neutral, or negative and computes `days_to_answer` |
-| `stg_products` | `raw_products`, `raw_category_translation` | Joins product categories with their English translations and computes `volumetric_weight_g` |
-| `stg_orders` | `raw_orders` | Normalizes order status, computes `is_delivered`, `is_late_delivery`, and delivery delay metrics |
+| `stg_order_items` | `raw_order_items` | Casts price and freight values to `decimal(10,2)`, calculates `total_item_revenue`, and removes rows with negative values |
+| `stg_order_payments` | `raw_order_payments` | Normalizes `payment_type` to lowercase and filters out records with negative `payment_value` |
+| `stg_order_reviews` | `raw_order_reviews` | Classifies review scores into `positive`, `neutral`, and `negative`, and calculates `days_to_answer` |
+| `stg_products` | `raw_products`, `raw_category_translation` | Joins with the category translation table to obtain English product categories and calculates `volumetric_weight_g` |
+| `stg_orders` | `raw_orders` | Standardizes order status, derives the `is_delivered` and `is_late_delivery` flags, and calculates delivery delay in days |
 
-Among these models, **`stg_orders`** contains the most significant business logic because many downstream Data Mart models reuse its derived fields.
+Among these models, `stg_orders` contains the most complex business logic. Most order lifecycle calculations—which are reused across multiple Data Mart models described in Section 5.4.2—are computed once here rather than being repeatedly implemented in each Gold-layer model.
 
 ```sql
 -- models/staging/stg_orders.sql
+--
+-- Cleans and standardises the raw_orders table.
+-- Applies type casting, null handling, and adds derived columns.
+-- Materialized as view (cheap, always fresh).
+
 with source as (
     select * from {{ source('olist_raw', 'raw_orders') }}
 ),
+
 cleaned as (
     select
+        -- Keys
         order_id,
         customer_id,
-        lower(trim(order_status)) as order_status,
 
-        order_purchase_timestamp::timestamp as ordered_at,
-        order_approved_at::timestamp as approved_at,
-        order_delivered_carrier_date::timestamp as shipped_at,
-        order_delivered_customer_date::timestamp as delivered_at,
-        order_estimated_delivery_date::timestamp as estimated_delivery_at,
+        -- Enums
+        lower(trim(order_status))                         as order_status,
 
+        -- Timestamps — cast and normalise
+        order_purchase_timestamp::timestamp               as ordered_at,
+        order_approved_at::timestamp                      as approved_at,
+        order_delivered_carrier_date::timestamp           as shipped_at,
+        order_delivered_customer_date::timestamp          as delivered_at,
+        order_estimated_delivery_date::timestamp          as estimated_delivery_at,
+
+        -- Derived
         date_trunc('day', order_purchase_timestamp)::date as order_date,
         date_trunc('week', order_purchase_timestamp)::date as order_week,
         date_trunc('month', order_purchase_timestamp)::date as order_month,
 
+        -- Is the order actually delivered?
         case
             when lower(order_status) = 'delivered'
              and order_delivered_customer_date is not null
-            then true else false
-        end as is_delivered,
+            then true
+            else false
+        end                                               as is_delivered,
 
+        -- Was delivery late?
         case
             when order_delivered_customer_date is not null
              and order_estimated_delivery_date is not null
              and order_delivered_customer_date > order_estimated_delivery_date
-            then true else false
-        end as is_late_delivery,
+            then true
+            else false
+        end                                               as is_late_delivery,
 
-        datediff('day',
-                 order_estimated_delivery_date,
-                 order_delivered_customer_date) as days_late,
+        -- Days late (negative = early)
+        datediff(
+            'day',
+            order_estimated_delivery_date,
+            order_delivered_customer_date
+        )                                                 as days_late,
 
         _loaded_at
+
     from source
     where order_id is not null
 )
+
 select * from cleaned
 ```
 
-The derived columns `order_date`, `order_week`, and `order_month` are computed once in the staging layer so that every downstream Data Mart—including `revenue_daily`, `category_revenue_monthly`, and `fct_customer_cohorts`—uses a consistent definition of order time.
+The three derived columns—`order_date`, `order_week`, and `order_month`—are precomputed here so that every Data Mart requiring time-based aggregation (such as `revenue_daily`, `category_revenue_monthly`, and `fct_customer_cohorts`) shares the same definition of the order date. This prevents individual models from implementing their own `date_trunc` logic differently. Likewise, the `is_delivered` and `is_late_delivery` flags are defined explicitly and centrally within this model, rather than requiring each downstream Data Mart to reimplement the comparison between the actual and estimated delivery dates.
 
-Similarly, the boolean flags `is_delivered` and `is_late_delivery` are defined centrally rather than being reimplemented repeatedly across multiple analytical models.
-
-The **`stg_products`** model illustrates another common transformation pattern by combining multiple source tables into a single reusable dataset.
+`stg_products` demonstrates another common transformation pattern: combining multiple data sources within the Staging layer to produce a single, analysis-ready dataset for downstream models.
 
 ```sql
 -- models/staging/stg_products.sql
@@ -226,16 +206,21 @@ translations as (
 joined as (
     select
         p.product_id,
-        coalesce(t.product_category_name_english, 'uncategorized') as category_en,
-        p.product_category_name as category_pt,
+        coalesce(t.product_category_name_english, 'uncategorized')  as category_en,
+        p.product_category_name                                      as category_pt,
+        p.product_name_length,
+        p.product_description_length,
+        p.product_photos_qty,
         p.product_weight_g,
         p.product_length_cm,
         p.product_height_cm,
         p.product_width_cm,
+
+        -- volumetric weight in grams (L × H × W / 5000 × 1000)
         round(
             (p.product_length_cm * p.product_height_cm * p.product_width_cm) / 5.0,
             2
-        ) as volumetric_weight_g
+        )                                                            as volumetric_weight_g
     from products p
     left join translations t
         on p.product_category_name = t.product_category_name
@@ -244,21 +229,13 @@ joined as (
 select * from joined
 ```
 
-Product category names are translated into English only once within `stg_products`, with missing translations defaulting to `'uncategorized'`. As a result, downstream models such as `category_revenue_monthly` simply reference this staging model without repeatedly joining the translation lookup table.
+The translation of product category names into English (`category_en`) is performed once within `stg_products` using a `LEFT JOIN`, with `'uncategorized'` assigned as the default value for categories without a matching translation. Consequently, the `category_revenue_monthly` model discussed in Section 5.4.2 only needs to reference this staging model through `ref()` instead of repeatedly joining the translation lookup table.
 
-All seven Staging Models are materialized as **views** (`+materialized: view` in `dbt_project.yml`, discussed in Section 5.5) rather than physical tables.
+All seven Staging Models are materialized as **views** (`+materialized: view` in `dbt_project.yml`, described in detail in Section 5.5) rather than physical tables. This choice is appropriate because the transformations in the Staging layer primarily consist of type casting, column renaming, and record filtering, all of which incur relatively low computational overhead. The main advantage of using views is that they always reflect the latest state of the underlying raw tables without consuming additional storage for duplicated data. The corresponding trade-off is that downstream Data Mart queries must recompute these lightweight transformations at runtime. However, given the project's scale (approximately 100,000 orders), this overhead is negligible compared with the benefits of maintaining a simpler architecture and ensuring data freshness.
 
-This choice is appropriate because staging transformations consist primarily of lightweight operations such as type casting, column renaming, and row filtering. Using views eliminates duplicate storage while ensuring that staging models always reflect the most recent state of the underlying raw tables.
+Each Staging Model is accompanied by a set of basic data quality constraints defined in `schema.yml`. For example, the `order_id` column in `stg_orders` is tested for both `unique` and `not_null`, while the `review_score` column in `stg_order_reviews` is validated to ensure its value belongs to the set `{1, 2, 3, 4, 5}`. These tests constitute the first layer of the project's Data Quality Testing framework. The complete set of tests and their automated execution within Airflow are described in detail in Section 5.4.3.
 
-The trade-off is that each downstream query must recompute these transformations. However, given the project's modest data volume (just over 100,000 orders), this computational overhead is negligible compared with the benefits of simplicity and data freshness.
+![dbt_project/models/staging Directory Structure](image.png)
 
-Each Staging Model is accompanied by basic data quality constraints defined in `schema.yml`. For example:
+![Query Result of `select * from staging.stg_orders limit 10;`](image-2.png)
 
-- `order_id` in `stg_orders` must satisfy both `unique` and `not_null` tests.
-- `review_score` in `stg_order_reviews` is restricted to the valid domain `{1, 2, 3, 4, 5}`.
-
-These tests form the first layer of the project's **Data Quality Testing** framework. The complete testing strategy and its automated execution within Apache Airflow are presented in Section 5.4.3.
-
-![dbt_project/models/staging directory](image.png)
-
-![Result of `SELECT * FROM staging.stg_orders LIMIT 10;`](image-2.png)

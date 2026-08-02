@@ -13,7 +13,7 @@ chapter: false
 
 &emsp; **Email:** thong.dangthong123@hcmut.edu.vn
 
-&emsp; **Trường:** Đại học Sư phạm Kỹ thuật TP.HCM
+&emsp; **Trường:** Đại Bách khoa TpHCM
 
 &emsp; **Ngành:** Công nghệ thông tin
 
