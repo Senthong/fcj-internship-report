@@ -22,29 +22,7 @@ Hệ thống được thiết kế theo mô hình kiến trúc phân tầng dữ
 
 Luồng xử lý dữ liệu tổng thể của hệ thống được tóm tắt như sau:
 
-```
-Bộ dữ liệu Olist (Kaggle)
-        │
-        ▼
-Script Python thực hiện ingestion (tải dữ liệu, kiểm tra hợp lệ, tải lên S3)
-        │
-        ▼
-Amazon S3 - Raw Bucket (tầng Bronze, phân vùng theo năm/tháng/ngày)
-        │
-        ├──────────────► AWS Glue Crawler ──► AWS Glue Data Catalog
-        │                  (phục vụ truy vấn ad-hoc qua Amazon Athena)
-        ▼
-Amazon Redshift Serverless - Schema Staging (tầng Silver, nạp bằng lệnh COPY)
-        │
-        ▼
-dbt Core - Staging Models (làm sạch, chuẩn hóa, tính toán các cột phái sinh)
-        │
-        ▼
-dbt Core - Data Mart Models (tầng Gold, tổng hợp theo nghiệp vụ)
-        │
-        ▼
-Amazon Redshift Serverless - Schema Analytics (bảng dữ liệu sẵn sàng phục vụ báo cáo)
-```
+![alt text](achitech.drawio.png)
 
 Toàn bộ chuỗi xử lý trên được Apache Airflow điều phối tự động theo lịch hằng ngày, đảm bảo dữ liệu trong kho luôn được cập nhật mà không cần can thiệp thủ công.
 

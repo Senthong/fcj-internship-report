@@ -27,37 +27,8 @@ This introductory section outlines the specific technical objectives of the impl
 The system is designed using the **Medallion Architecture (Bronze – Silver – Gold)** together with dbt's familiar **Staging – Data Mart** organization. This layered architecture is chosen instead of transforming data directly from the source into reporting tables for two primary reasons. First, it clearly separates raw, immutable data—which can always be traced back and reprocessed—from transformed data. Second, it minimizes duplicated transformation logic, as fundamental transformations are implemented once in the Staging layer and then reused by downstream Data Mart models through dbt's `ref()` function.
 
 The overall data processing workflow is summarized below:
+![alt text](achitech.drawio-1.png)
 
-```text
-Olist Dataset (Kaggle)
-        │
-        ▼
-Python Ingestion Script
-(downloads data, validates it, uploads to S3)
-        │
-        ▼
-Amazon S3 - Raw Bucket
-(Bronze Layer, partitioned by year/month/day)
-        │
-        ├──────────────► AWS Glue Crawler ──► AWS Glue Data Catalog
-        │                    (supports ad-hoc queries through Amazon Athena)
-        ▼
-Amazon Redshift Serverless
-Staging Schema (Silver Layer, loaded using COPY)
-        │
-        ▼
-dbt Core - Staging Models
-(cleaning, standardization, derived columns)
-        │
-        ▼
-dbt Core - Data Mart Models
-(Gold Layer, business-oriented aggregations)
-        │
-        ▼
-Amazon Redshift Serverless
-Analytics Schema
-(reporting-ready Data Mart tables)
-```
 
 The entire workflow is orchestrated by **Apache Airflow**, which executes the pipeline on a daily schedule to ensure that the data warehouse remains continuously up to date without manual intervention.
 
