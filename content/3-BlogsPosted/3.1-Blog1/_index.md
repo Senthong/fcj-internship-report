@@ -1,7 +1,7 @@
 ---
 title: "Blog 1: AWS Glue vs AWS Lambda + Polars"
 date: 2026-06-29
-weight: 5
+weight: 3
 chapter: false
 ---
 
