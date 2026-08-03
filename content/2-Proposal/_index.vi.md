@@ -6,8 +6,6 @@ chapter: false
 pre: " <b> 2. </b> "
 ---
 
-Tại phần này, tôi sẽ trình bày tổng quan về dự án **E-Commerce Data Pipeline**, mục tiêu, kiến trúc hệ thống, kế hoạch triển khai và những lợi ích dự kiến đạt được.
-
 # E-Commerce Data Pipeline
 ## Xây dựng hệ thống ELT tự động trên AWS phục vụ phân tích dữ liệu thương mại điện tử
 

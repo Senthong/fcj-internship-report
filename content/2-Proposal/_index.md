@@ -6,8 +6,6 @@ chapter: false
 pre: " <b> 2. </b> "
 ---
 
-In this section, the proposed project and implementation plan are presented.
-
 # E-Commerce Data Pipeline
 ## A Modern ELT Pipeline on AWS for Analytics and Business Intelligence
 
