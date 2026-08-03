@@ -1,5 +1,5 @@
 ---
-title: "Blog 3: Tối ưu chi phí AWS EC2 với AWS Graviton"
+title: "03. Tối ưu chi phí AWS EC2 với AWS Graviton"
 date: 2026-07-06
 weight: 6
 chapter: false

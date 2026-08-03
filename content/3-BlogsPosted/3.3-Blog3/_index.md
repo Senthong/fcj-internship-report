@@ -1,5 +1,5 @@
 ---
-title: "Blog 3: Optimizing AWS EC2 Costs with AWS Graviton"
+title: "03. Optimizing AWS EC2 Costs with AWS Graviton"
 date: 2026-07-06
 weight: 6
 chapter: false

@@ -1,5 +1,5 @@
 ---
-title: "Blog 2: Troubleshooting AWS S3 Access Denied (403)"
+title: "02. Troubleshooting AWS S3 Access Denied (403)"
 date: 2026-06-22
 weight: 4
 chapter: false
