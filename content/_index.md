@@ -10,7 +10,7 @@ chapter: false
 
 
 ### Student Information:
-&emsp; **Full Name:** Đặng văn Thông
+&emsp; **Full Name:** Đặng Văn Thông
 
 &emsp; **Phone Number:** 0379702302
 
@@ -18,7 +18,7 @@ chapter: false
 
 &emsp; **University:** Ho Chi Minh City University of Technology 
 
-&emsp; **Major:** Information Technology
+&emsp; **Major:** Computer Science
 
 &emsp; **Class:** AWS062026
 

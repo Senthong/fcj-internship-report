@@ -76,7 +76,7 @@ Apache Airflow
  Data Mart
 ```
 
-*(Chèn sơ đồ kiến trúc tại đây)*
+![alt text](achitech.drawio.png)
 
 ### Các công nghệ sử dụng
 

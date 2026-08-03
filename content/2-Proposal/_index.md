@@ -92,8 +92,7 @@ Amazon Redshift
       ▼
  Analytics Data Marts
 ```
-
-*(Insert architecture diagram here)*
+![alt text](achitech.drawio.png)
 
 ### AWS Services Used
 
