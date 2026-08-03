@@ -6,11 +6,10 @@ chapter: false
 pre: " <b> 3. </b> "
 ---
 
-Phần này sẽ tổng hợp và giới thiệu các bài blog bạn đã đăng trên [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj). Ví dụ:
 
 # Các bài blog trên AWS Study Group
 
-Kho lưu trữ này bao gồm bộ sưu tập các bài blog mà tôi đã xuất bản trên AWS Study Group, tập trung vào kiến trúc cloud-native, các giải pháp serverless, tối ưu hạ tầng AWS và các kinh nghiệm thực tế trong quá trình xây dựng ứng dụng trên nền tảng đám mây.
+Kho lưu trữ này bao gồm bộ sưu tập các bài blog mà tôi đã xuất bản trên [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj), tập trung vào kiến trúc cloud-native, các giải pháp serverless, tối ưu hạ tầng AWS và các kinh nghiệm thực tế trong quá trình xây dựng ứng dụng trên nền tảng đám mây.
 
 ### [Blog 1 - AWS Glue (PySpark) và AWS Lambda + Polars: Khi Serverless vượt trội hơn Spark](3-BlogsPosted/3.1-Blog1)
 

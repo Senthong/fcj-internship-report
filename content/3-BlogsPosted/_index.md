@@ -6,11 +6,9 @@ chapter: false
 pre: " <b> 3. </b> "
 ---
 
-This section will list and introduce the blogs you have posted to [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj). For example:
-
 # AWS Study Group Blogs
 
-This repository contains a collection of blog posts that I have published on the AWS Study Group, covering cloud-native architecture, serverless solutions, security, and AWS services applied to real-world healthcare systems.
+This repository contains a collection of blog posts that I have published on the [AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj)., covering cloud-native architecture, serverless solutions, security, and AWS services applied to real-world healthcare systems.
 
 ### [Blog 1 - AWS Glue (PySpark) vs. AWS Lambda + Polars: When Serverless Outperforms Spark](3-BlogsPosted/3.1-Blog1)
 
