@@ -1,175 +1,189 @@
 ---
-title: "Blog 1: Serverless RAG with AWS Bedrock"
-date: 2026-06-01
-weight: 1
+title: "Blog 1: AWS Glue vs AWS Lambda + Polars"
+date: 2026-06-29
+weight: 5
 chapter: false
 ---
 
-# [FCAJ2026] What is AWS Bedrock Knowledge Bases? Why is it the Perfect “Missing Piece” for Serverless RAG Architecture?
+# [FCAJ2026] AWS Glue (PySpark) vs. AWS Lambda + Polars: When a Simple Serverless Architecture Outperforms Spark
 
 ## Introduction
 
-After learning how to build Medical AI Assistant systems using the Retrieval-Augmented Generation (RAG) approach from scratch, I began facing a series of challenges in managing the entire data pipeline on my own. What surprised me was that when reading AWS official documentation and reference architectures, most solutions leveraged **AWS Bedrock Knowledge Bases** instead of deploying and maintaining standalone vector databases.
+Within the Data Engineering community, there is a common assumption that processing tens or hundreds of gigabytes of data on AWS automatically requires **AWS Glue**, **Apache Spark**, or **Amazon EMR**.
 
-This made me wonder:
+However, while redesigning a production data pipeline that processes approximately **100 GB of transaction data per day** stored as compressed Parquet and CSV files on Amazon S3, our team experimented with a different architecture.
 
-> *If building custom chunking pipelines and managing a vector database is the standard approach to RAG, why did AWS create Bedrock Knowledge Bases?*
+Instead of relying on AWS Glue, we built a fully serverless ETL pipeline using:
 
-After studying the official documentation and deploying the service in a Medical AI Assistant project, I realized that AWS Bedrock Knowledge Bases is much more than a vector storage service. It is a fully managed solution that automates the entire RAG workflow and transforms complex infrastructure into a serverless experience.
+- AWS Lambda
+- Polars
+- AWS Step Functions (Distributed Map)
 
----
-
-## Self-Managing RAG Infrastructure – An Operational Nightmare
-
-At first, I believed building a RAG system was mainly about writing Python code.
-
-For example, to process thousands of medical PDF and CSV documents, I needed to:
-
-- Split documents into semantic chunks.
-- Generate embeddings by calling embedding models.
-- Deploy and maintain a vector database such as **Milvus** or **Qdrant**.
-- Build synchronization pipelines to keep the vector database updated.
-
-This approach works well for small-scale projects. However, as the amount of medical knowledge grows, maintaining the infrastructure becomes increasingly difficult.
-
-The engineering team must continuously monitor:
-
-- Vector database availability
-- Storage scaling
-- Embedding synchronization
-- Scheduled ingestion pipelines
-- Infrastructure maintenance
-
-Instead of focusing on application development, a significant amount of time is spent operating infrastructure.
-
-This is exactly why modern cloud architectures encourage the adoption of **Managed Serverless Services**, allowing cloud providers to manage the underlying infrastructure while developers focus on business logic.
+The benchmark results surprised our entire infrastructure team.
 
 ---
 
-## What is AWS Bedrock Knowledge Bases?
+## Benchmark Results
 
-According to the AWS documentation, **Knowledge Bases for Amazon Bedrock** is a fully managed capability that connects Foundation Models with enterprise data sources to implement Retrieval-Augmented Generation (RAG).
+Both solutions processed exactly the same production dataset.
 
-Rather than implementing every stage manually, AWS automates the entire ingestion pipeline.
+| Metric | AWS Glue (8 DPUs) | AWS Lambda + Polars |
+|---------|------------------:|--------------------:|
+| Processing Time | ~11 min 40 sec | ~2 min 15 sec |
+| Startup Time | 2–3 minutes | < 800 ms |
+| Cost per Run | ~$1.68 | ~$0.11 |
+| Code Complexity | High | Low |
 
-It provides:
+Compared with AWS Glue, the serverless solution achieved:
 
-- **Automated Chunking** – Splits documents into meaningful semantic chunks.
-- **Automated Embedding** – Generates vector embeddings using models such as Amazon Titan or Cohere.
-- **Automated Indexing** – Stores vectors inside a managed backend such as Amazon OpenSearch Serverless.
+- **5.2× faster execution**
+- **Over 93% lower processing cost**
+- **Virtually zero infrastructure management**
 
-Using Bedrock Knowledge Bases completely changed my perspective on AI system development.
-
-Previously, I assumed AI engineers had to manage every stage of the data pipeline manually.
-
-Now I realize that infrastructure operations should be automated so engineers can concentrate on solving business problems instead.
-
----
-
-## Workflow with AWS Bedrock Knowledge Bases
-
-The integration process became remarkably straightforward.
-
-### 1. Upload Data to Amazon S3
-
-Amazon S3 serves as the raw knowledge repository.
-
-Clinical guidelines, treatment protocols, medical research papers, and other reference documents are simply uploaded into an S3 bucket.
+As a result, AWS Lambda + Polars became our production ETL solution, while AWS Glue remains available for future petabyte-scale workloads.
 
 ---
 
-### 2. Start an Ingestion Job
+## Why Was Lambda Faster?
 
-With a single click in the AWS Console—or through an API call—the service automatically:
+The biggest performance difference comes from the underlying execution engine.
 
-- Detects newly uploaded files
-- Performs semantic chunking
-- Generates embeddings
-- Updates the knowledge base
+AWS Glue is built on Apache Spark, which requires:
 
-All of these steps happen without downtime or manual intervention.
+- Driver initialization
+- Executor provisioning
+- JVM startup
+- Python-to-JVM communication through Py4J
+- Serialization and deserialization
 
----
+Although Spark excels at massive distributed workloads, these overheads become significant for medium-sized datasets.
 
-### 3. Retrieve Knowledge via LangChain
+Polars, on the other hand, is written entirely in **Rust** and built on **Apache Arrow**.
 
-Applications can retrieve relevant context using LangChain's `AmazonKnowledgeBasesRetriever`.
+Its execution engine performs:
 
-Instead of writing database queries or managing vector search infrastructure, developers simply provide:
+- Multi-threaded processing
+- Vectorized execution
+- Zero-copy memory operations
 
-- Knowledge Base ID
-- Retrieval configuration
-
-The retriever supports hybrid search and integrates seamlessly with Amazon Bedrock.
-
----
-
-## The Role of Amazon S3 in the Architecture
-
-Initially, I considered Amazon S3 to be nothing more than object storage.
-
-However, after integrating it with Bedrock Knowledge Bases, I realized it acts as the **knowledge gateway** for the entire AI system.
-
-Whenever hospitals publish:
-
-- New treatment protocols
-- Updated medication lists
-- Clinical guidelines
-- Medical documentation
-
-Administrators only need to upload the new files into Amazon S3.
-
-No application deployment is required.
-
-No pipeline modifications are necessary.
-
-After running an ingestion job, the AI system immediately gains access to the latest knowledge.
-
-Together, Amazon S3 and AWS Bedrock Knowledge Bases create an automated and continuously evolving knowledge management pipeline.
+without any JVM overhead, allowing it to utilize hardware resources much more efficiently.
 
 ---
 
-## Why is AWS Bedrock Knowledge Bases the "True Love" for AI Engineers?
+## Divide and Conquer with AWS Step Functions
 
-After completing the project, one conclusion became very clear:
+Instead of processing the entire 100 GB dataset inside one large ETL job, the pipeline adopts a divide-and-conquer strategy.
 
-The biggest benefit is **eliminating infrastructure management**.
+Data stored in Amazon S3 is partitioned by:
 
-When implementing RAG manually, engineers are responsible for:
+- Year
+- Month
+- Day
+- Hour
 
-- Deploying vector databases
-- Monitoring infrastructure
-- Building ingestion pipelines
-- Handling synchronization failures
-- Managing scaling
+AWS Step Functions Distributed Map launches multiple Lambda functions simultaneously.
 
-With AWS Bedrock Knowledge Bases, all of these responsibilities are handled by AWS.
+Each Lambda processes only one partition.
 
-Instead of worrying about infrastructure, developers can dedicate their efforts to:
+For example:
 
-- Improving retrieval quality
-- Optimizing prompts
-- Enhancing business workflows
-- Delivering better patient experiences
+- 50 Lambda functions
+- 10 GB memory each
+- Up to 6 vCPUs
+- Processing partitions independently
 
-For engineering teams, this can save weeks of development and operational effort while significantly simplifying system architecture.
+This architecture fully utilizes AWS Lambda concurrency while keeping each execution lightweight.
+
+---
+
+## Eliminating Spark Shuffle
+
+One of Spark's largest performance bottlenecks is **shuffle operations**.
+
+Whenever joins or aggregations require data movement between worker nodes, Spark spends considerable time transferring intermediate data across the network.
+
+Instead, our pipeline minimizes network communication by designing the S3 data layout carefully.
+
+Using partition pruning during ingestion allows every Lambda function to read only the partitions it actually needs.
+
+No expensive shuffle operations are required.
+
+---
+
+## Benefits Beyond Performance
+
+### Lower Cloud Costs
+
+AWS Lambda follows a true pay-as-you-go pricing model.
+
+For organizations running hundreds of ETL pipelines every day, reducing execution costs by more than 90% can translate into thousands of dollars saved each month.
+
+---
+
+### Zero Cluster Management
+
+Unlike Spark clusters, the Lambda architecture requires no:
+
+- Cluster provisioning
+- JVM tuning
+- Executor configuration
+- Memory optimization
+- Spark version management
+
+The deployment simply consists of lightweight Docker container images running Python and Polars.
+
+---
+
+### Easier Development Experience
+
+Running PySpark locally often requires additional configuration and substantial system resources.
+
+Polars runs directly as standard Python code.
+
+Developers can execute, debug, and test locally with minimal setup before deploying the same container image to AWS Lambda.
+
+---
+
+## Is AWS Glue Still Relevant?
+
+Absolutely.
+
+This benchmark does **not** suggest that Apache Spark or AWS Glue are obsolete.
+
+AWS Glue remains the preferred solution for:
+
+- Petabyte-scale processing
+- Large distributed joins
+- Memory-intensive workloads
+- Complex enterprise data lakes
+
+Spark is designed for problems that cannot fit into the resources available to individual compute instances.
 
 ---
 
 ## Conclusion
 
-AWS Bedrock Knowledge Bases is far more than a managed vector database.
+For many enterprise ETL workloads ranging from gigabytes to several terabytes, a serverless architecture built with **AWS Lambda**, **AWS Step Functions**, and modern data processing engines such as **Polars** can provide significantly better performance-to-cost efficiency than traditional Spark-based solutions.
 
-It is a fully managed RAG service that automates document ingestion, chunking, embedding generation, indexing, and retrieval.
+Rather than defaulting to a large distributed cluster, engineers should first ask a simple question:
 
-For teams building enterprise AI applications—especially in healthcare—this service removes much of the operational complexity traditionally associated with Retrieval-Augmented Generation, allowing developers to focus on creating intelligent applications rather than maintaining infrastructure.
+> **Can this problem be solved more efficiently with a lightweight serverless architecture?**
+
+In many real-world scenarios, the answer may be yes.
 
 ---
 
 ## References
+Read the full article on **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233435944088032/)**.
 
-- AWS. *Knowledge Bases for Amazon Bedrock*.  
-  https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html
+- AWS. **AWS Lambda Developer Guide**  
+  https://docs.aws.amazon.com/lambda/
 
-- LangChain. *Amazon Knowledge Bases Integrations*.  
-  https://python.langchain.com/docs/integrations/retrievers/bedrock/
+- Polars. **Blazingly Fast DataFrames Library**  
+  https://pola.rs/
+
+- AWS. **AWS Step Functions Distributed Map**  
+  https://aws.amazon.com/step-functions/
+
+- Apache Arrow. **Architecture Documentation**  
+  https://arrow.apache.org/

@@ -12,15 +12,19 @@ This section will list and introduce the blogs you have posted to [AWS Study Gro
 
 This repository contains a collection of blog posts that I have published on the AWS Study Group, covering cloud-native architecture, serverless solutions, security, and AWS services applied to real-world healthcare systems.
 
-### [Blog 1 - AWS Bedrock Knowledge Bases: The Perfect "Missing Piece" for Serverless RAG Architecture](3-BlogsPosted/3.1-Blog1)
+### [Blog 1 - AWS Glue (PySpark) vs. AWS Lambda + Polars: When Serverless Outperforms Spark](3-BlogsPosted/3.1-Blog1)
 
-This blog introduces **AWS Bedrock Knowledge Bases**, a service that fully automates the RAG pipeline—including document chunking, embedding generation, and vector indexing—without requiring developers to manage complex vector database infrastructure. By adopting a Serverless RAG architecture, the Medical AI Assistant system can scale efficiently while automatically synchronizing new knowledge from Amazon S3.
-![alt text](image-2.png)
-### [Blog 2 - AWS Cognito: The Indispensable "Missing Piece" for Digital Healthcare Systems](3-BlogsPosted/3.2-Blog2)
+This blog compares two modern AWS ETL architectures through a real-world benchmark: **AWS Glue (PySpark)** versus **AWS Lambda + Polars orchestrated by AWS Step Functions**. It analyzes performance, cost, scalability, and architectural trade-offs, demonstrating how a lightweight serverless design can significantly outperform traditional Spark clusters for gigabyte-to-terabyte scale data pipelines.
+Read the full article on **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233435944088032/)**.
 
-This blog explores how to solve multi-role authentication and authorization for a digital healthcare platform supporting Patients, Doctors, and Receptionists. By integrating **AWS Cognito**, the system leverages fully managed identity services, Role-Based Access Control (RBAC) using JWT tokens, and secure user onboarding flows to protect sensitive medical information while reducing operational overhead.
 ![alt text](image-1.png)
-### [Blog 3 - AWS S3 Bucket: The Cloud-Native Storage "Missing Piece" for Digital Healthcare Systems](3-BlogsPosted/3.3-Blog3)
+### [Blog 2 - Troubleshooting AWS S3 Access Denied (403) on EC2](3-BlogsPosted/3.2-Blog2)
 
-This blog shares the experience of migrating file storage—including medical images, certificates, and AI model weight files—from local servers to **Amazon S3**. Using S3 enables a stateless backend architecture, simplifies horizontal scaling, and improves the security of sensitive healthcare data through the use of Presigned URLs.
+This blog shares a real-world debugging experience of resolving the **S3 Access Denied (403 Forbidden)** error when an EC2 instance accesses Amazon S3. It explains common permission pitfalls involving IAM Roles, Bucket Policies, Resource ARNs, SSE-KMS encryption, and VPC Endpoint Policies, along with practical troubleshooting steps and best practices for building secure cloud-native applications.
+Read the full article on **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233435944088032/)**.
+![alt text](<Screenshot 2026-08-03 221656.png>)
+
+### [Blog 3 - Optimizing AWS EC2 Costs with AWS Graviton (ARM)](3-BlogsPosted/3.3-Blog3)
+This blog demonstrates how migrating Amazon EC2 workloads from traditional **x86 instances** to **AWS Graviton (ARM)** can significantly reduce infrastructure costs while improving performance. It covers real-world benchmarking results, migration steps, multi-architecture Docker builds, and best practices for adopting ARM-based cloud-native workloads.
+Read the full article on **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233445714087055/)**.
 ![alt text](image.png)

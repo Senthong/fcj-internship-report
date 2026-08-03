@@ -1,119 +1,182 @@
 ---
-title: "Blog 2: AWS Cognito cho Hệ thống Chăm sóc Sức khỏe Số"
-date: 2026-06-08
-weight: 2
+title: "Blog 2: Khắc phục lỗi AWS S3 Access Denied (403)"
+date: 2026-06-22
+weight: 4
 chapter: false
 ---
 
-# [FCAJ2026] AWS Cognito là gì? Vì sao đây là mảnh ghép không thể thiếu của Hệ thống Chăm sóc Sức khỏe Số?
+# [FCAJ2026] Khắc phục lỗi AWS S3 Access Denied (403) trên EC2 – Những bài học thực tế
 
 ## Giới thiệu
 
-Trong quá trình phát triển **Nền tảng Chăm sóc Sức khỏe Thông minh (Smart Healthcare Platform)** — một hệ thống hỗ trợ phân loại triệu chứng bằng AI và đặt lịch khám trực tuyến — việc quản lý danh tính người dùng và kiểm soát quyền truy cập theo nhiều vai trò là một trong những thách thức lớn nhất về mặt kiến trúc.
+Trong quá trình triển khai ứng dụng cloud-native trên AWS, mình đã gặp phải một trong những lỗi phổ biến nhưng cũng gây khó chịu nhất khi tích hợp **Amazon S3** với **Amazon EC2**:
 
-Nền tảng hỗ trợ ba nhóm người dùng hoàn toàn khác nhau:
+> **AccessDenied (403 Forbidden)**
 
-- Bệnh nhân
-- Bác sĩ
-- Nhân viên lễ tân
+Ứng dụng hoạt động hoàn toàn bình thường trong môi trường phát triển cục bộ (local), nhưng ngay sau khi triển khai lên EC2 thì mọi thao tác với Amazon S3 đều thất bại.
 
-Mỗi vai trò đều có quyền hạn và mức độ truy cập riêng. Thay vì tự xây dựng và duy trì một hệ thống xác thực người dùng, dự án đã tích hợp **AWS Cognito** như một dịch vụ quản lý danh tính được AWS vận hành hoàn toàn.
+Ban đầu, mình cho rằng nguyên nhân chỉ đơn giản là thiếu quyền truy cập. Tuy nhiên, sau nhiều giờ kiểm tra và gỡ lỗi, mình nhận ra rằng cơ chế phân quyền của Amazon S3 bao gồm nhiều lớp bảo mật khác nhau, chứ không chỉ phụ thuộc vào một IAM Policy.
 
-Quyết định này giúp đơn giản hóa quá trình xác thực, phân quyền và quản lý người dùng, đồng thời nâng cao tính bảo mật cho toàn bộ hệ thống chăm sóc sức khỏe.
+Bài viết này tổng hợp nguyên nhân gốc rễ, quá trình xử lý và những bài học mình rút ra khi giải quyết lỗi này.
 
 ---
 
-## AWS Cognito là gì?
+## Vì sao chạy được trên Local nhưng lại lỗi trên EC2?
 
-AWS Cognito là một dịch vụ **quản lý danh tính và quyền truy cập (Identity and Access Management) được AWS quản lý hoàn toàn**, cho phép nhà phát triển xác thực và phân quyền người dùng mà không cần tự xây dựng hạ tầng xác thực từ đầu.
+Trong quá trình phát triển, mình xác thực thông qua một **IAM User** được cấu hình bằng AWS CLI.
 
-Dịch vụ cung cấp hai thành phần cốt lõi:
+IAM User này được gán sẵn chính sách **AmazonS3FullAccess**, vì vậy mọi thao tác với Amazon S3 đều thành công.
 
-- **User Pools** để quản lý tài khoản người dùng và quá trình xác thực.
-- **Identity Pools** để cấp quyền truy cập an toàn tới các tài nguyên AWS cho người dùng đã được xác thực.
+Khi triển khai lên môi trường production, mình làm theo khuyến nghị của AWS và chuyển sang sử dụng **IAM Role (Instance Profile)** gắn trực tiếp với EC2 Instance.
 
-Nhờ sử dụng AWS Cognito, nhóm phát triển có thể tập trung xây dựng các tính năng của ứng dụng, trong khi AWS đảm nhiệm việc quản lý mật khẩu, tạo token, xác minh người dùng và áp dụng các thực tiễn bảo mật tốt nhất.
+Ngay sau khi triển khai, mọi yêu cầu tới Amazon S3 đều trả về lỗi:
 
----
+```text
+AccessDenied (403 Forbidden)
+```
 
-## Giải quyết bài toán phân quyền đa vai trò
-
-Một trong những yêu cầu quan trọng nhất của Smart Healthcare Platform là hỗ trợ nhiều nhóm người dùng với quyền truy cập khác nhau.
-
-Hệ thống triển khai mô hình **Role-Based Access Control (RBAC)** thông qua **Cognito Groups**.
-
-Mỗi người dùng sẽ thuộc về một nhóm cụ thể, chẳng hạn như:
-
-- Patient
-- Doctor
-- Receptionist
-
-Sau khi người dùng đăng nhập thành công, AWS Cognito sẽ phát hành một JWT Token chứa thuộc tính **`cognito:groups`**.
-
-Backend sẽ xác thực token và xác định quyền của người dùng dựa trực tiếp trên thông tin nhóm được nhúng trong token, giúp loại bỏ nhu cầu xây dựng các cơ chế phân quyền phức tạp trong ứng dụng.
+Sau khi phân tích, mình xác định được hai nguyên nhân chính.
 
 ---
 
-## Quy trình tạo tài khoản an toàn cho nhân viên y tế
+## Nguyên nhân 1 – Sai Resource ARN
 
-Việc quản lý tài khoản của bác sĩ và nhân viên lễ tân đòi hỏi một quy trình khởi tạo tài khoản an toàn.
+Một trong những lỗi phổ biến nhất là sử dụng sai phạm vi của **Resource ARN** trong IAM Policy.
 
-Thay vì phải tự đặt mật khẩu cho từng người dùng, quản trị viên chỉ cần tạo tài khoản thông qua API của backend.
+Ví dụ:
 
-AWS Cognito sẽ tự động:
+- Các quyền áp dụng ở cấp Bucket như `s3:ListBucket` yêu cầu ARN:
 
-- Tạo tài khoản người dùng.
-- Gửi email chứa mật khẩu tạm thời.
-- Yêu cầu người dùng đổi mật khẩu trong lần đăng nhập đầu tiên.
+```text
+arn:aws:s3:::my-bucket
+```
 
-Quy trình này vừa nâng cao tính bảo mật vừa giảm đáng kể khối lượng công việc quản trị.
+- Trong khi các quyền áp dụng ở cấp Object như:
 
----
+  - `s3:GetObject`
+  - `s3:PutObject`
+  - `s3:DeleteObject`
 
-## Xác thực JWT Token an toàn
+phải sử dụng ARN:
 
-Dịch vụ backend được xây dựng bằng **NestJS** không lưu mật khẩu của người dùng trong cơ sở dữ liệu.
+```text
+arn:aws:s3:::my-bucket/*
+```
 
-Thay vào đó, mọi JWT Token gửi đến đều được xác thực bằng **Public Keys** do AWS Cognito cung cấp.
-
-Cách tiếp cận này mang lại nhiều lợi ích:
-
-- Mật khẩu không bao giờ tồn tại trong cơ sở dữ liệu của backend.
-- Quá trình xác thực tuân thủ các tiêu chuẩn bảo mật phổ biến.
-- Việc xác minh token đơn giản, đáng tin cậy và có khả năng mở rộng cao.
+Nếu thiếu phần `/*`, Amazon S3 sẽ ngay lập tức từ chối các thao tác với object và trả về lỗi **Access Denied**.
 
 ---
 
-## Bảo vệ dữ liệu y tế nhạy cảm
+## Nguyên nhân 2 – Mã hóa SSE-KMS
 
-Các hệ thống chăm sóc sức khỏe phải đáp ứng những yêu cầu nghiêm ngặt về quyền riêng tư và bảo mật dữ liệu.
+Một nguyên nhân khác khó nhận biết hơn là khi bật **Server-Side Encryption với AWS KMS (SSE-KMS)**.
 
-Để tăng cường bảo vệ danh tính người dùng, nền tảng còn áp dụng **chiến lược ẩn danh hóa bằng UUID**, giúp tránh việc lộ các mã định danh nội bộ của hệ thống.
+Mặc dù IAM Role đã có quyền truy cập vào S3 Bucket, nhưng EC2 Instance **không được phép sử dụng KMS Key**.
 
-Kết hợp với cơ chế xác thực của AWS Cognito, kiến trúc này bổ sung thêm một lớp bảo vệ cho các dữ liệu y tế nhạy cảm.
+Kết quả là:
+
+- Amazon S3 vẫn tìm thấy object.
+- Nhưng AWS KMS từ chối giải mã.
+- Phản hồi cuối cùng vẫn là **403 Access Denied**.
+
+Để khắc phục, IAM Role của EC2 cần được thêm vào **KMS Key Policy** với các quyền như:
+
+- `kms:Decrypt`
+- `kms:GenerateDataKey`
 
 ---
 
-## Tối ưu chi phí
+## Các bước khắc phục sự cố
 
-Một ưu điểm nổi bật khác của AWS Cognito là khả năng tối ưu chi phí.
+### Bước 1 – Kiểm tra IAM Role của EC2
 
-Dịch vụ cung cấp **AWS Free Tier** với khả năng hỗ trợ tới **50.000 Monthly Active Users (MAUs)**, phù hợp với các startup, dự án học tập và các ứng dụng chăm sóc sức khỏe trong giai đoạn đầu.
+Phân tách rõ quyền ở cấp Bucket và cấp Object.
 
-Do AWS chịu trách nhiệm vận hành toàn bộ hạ tầng xác thực, nhóm phát triển không cần triển khai hay bảo trì các máy chủ xác thực riêng, từ đó giảm cả chi phí vận hành lẫn chi phí hạ tầng.
+**Bucket-level permissions:**
+
+- `s3:ListBucket`
+
+**Object-level permissions:**
+
+- `s3:GetObject`
+- `s3:PutObject`
+- `s3:DeleteObject`
+
+Đồng thời xác minh rằng mỗi quyền đều tham chiếu đúng Resource ARN.
+
+---
+
+### Bước 2 – Kiểm tra KMS Key Policy
+
+Nếu Bucket sử dụng mã hóa SSE-KMS, hãy đảm bảo IAM Role của EC2 được cấp quyền rõ ràng để:
+
+- Giải mã dữ liệu (`Decrypt`)
+- Tạo Data Key (`GenerateDataKey`)
+
+Nếu thiếu các quyền này, Amazon S3 sẽ không thể trả về object đã được mã hóa, ngay cả khi Bucket Policy đã được cấu hình chính xác.
+
+---
+
+### Bước 3 – Kiểm tra các lớp bảo mật khác
+
+Cơ chế phân quyền của Amazon S3 bao gồm nhiều lớp đánh giá chính sách.
+
+Khi xử lý lỗi **Access Denied**, hãy lần lượt kiểm tra:
+
+- Bucket Policy
+- IAM Policy
+- KMS Key Policy
+- Object Ownership
+- Block Public Access
+- VPC Endpoint Policy (nếu sử dụng)
+
+Chỉ cần một **Explicit Deny** ở bất kỳ lớp nào cũng sẽ ghi đè toàn bộ các quyền **Allow**.
+
+---
+
+### Bước 4 – Thiết lập giám sát
+
+Để giảm thời gian xử lý các sự cố tương tự trong tương lai, mình đã cấu hình **Amazon CloudWatch** để theo dõi các lỗi phân quyền.
+
+Một **Metric Filter** sẽ tìm kiếm các sự kiện chứa từ khóa **AccessDenied** và gửi cảnh báo thông qua **Amazon SNS**.
+
+Nhờ đó, các lỗi về quyền truy cập có thể được phát hiện ngay lập tức mà không cần chờ người dùng báo lỗi.
+
+---
+
+## Bài học rút ra
+
+Quá trình gỡ lỗi này giúp mình hiểu rõ hơn nhiều khái niệm quan trọng về bảo mật trên AWS.
+
+- Một ứng dụng chạy thành công trên môi trường local không đồng nghĩa với việc sẽ hoạt động trên EC2, bởi IAM User và IAM Role có cơ chế phân quyền khác nhau.
+
+- Lỗi **AccessDenied** không phải lúc nào cũng xuất phát từ IAM Policy. Bucket Policy, KMS Key Policy, Block Public Access, Object Ownership và VPC Endpoint Policy đều có thể ảnh hưởng đến kết quả phân quyền.
+
+- Trước khi triển khai ứng dụng, nên kiểm tra quyền bằng **IAM Policy Simulator** hoặc **IAM Access Analyzer**.
+
+- Nếu Amazon S3 sử dụng **SSE-KMS**, hãy luôn kiểm tra cả **KMS Key Policy** bên cạnh các quyền truy cập S3.
 
 ---
 
 ## Kết luận
 
-AWS Cognito không chỉ đơn thuần là một dịch vụ đăng nhập.
+Mặc dù lỗi **S3 Access Denied (403)** có vẻ đơn giản, nhưng việc xử lý thường đòi hỏi phải hiểu rõ cách các dịch vụ bảo mật của AWS phối hợp với nhau.
 
-Đây là một nền tảng quản lý danh tính được AWS quản lý hoàn toàn, giúp đơn giản hóa việc xác thực, phân quyền, quản lý người dùng và tăng cường bảo mật cho các ứng dụng cloud-native hiện đại.
+Thông qua việc rà soát IAM Role, Resource ARN, Bucket Policy, quyền của KMS và hệ thống giám sát, mình đã giải quyết hoàn toàn sự cố này, đồng thời nâng cao mức độ bảo mật cho kiến trúc lưu trữ của ứng dụng.
 
-Đối với các hệ thống chăm sóc sức khỏe số, việc tích hợp AWS Cognito giúp nhóm phát triển giảm bớt sự phức tạp của hạ tầng xác thực để tập trung xây dựng những tính năng mang lại giá trị thực sự cho bệnh nhân và quy trình khám chữa bệnh.
+Hiểu rõ các lớp phân quyền này không chỉ giúp xử lý nhanh các sự cố khi triển khai mà còn góp phần xây dựng những ứng dụng cloud-native an toàn, ổn định và đáng tin cậy hơn.
 
 ---
 
-## Đọc bài viết đầy đủ
+## Tài liệu tham khảo
 
-Xem chi tiết **[tại đây](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2228021697962790/?rdid=MLFJXbxXfs8sMMKH)**.
+Đọc bài viết đầy đủ trên **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233435944088032/)**.
+
+- AWS. **Troubleshoot Amazon S3 403 Access Denied Errors**  
+  https://repost.aws/knowledge-center/s3-troubleshoot-403
+
+- AWS. **IAM Roles for Amazon EC2**  
+  https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+
+- AWS. **IAM Policy Simulator**  
+  https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_testing-policies.html

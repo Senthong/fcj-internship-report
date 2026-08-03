@@ -1,125 +1,165 @@
 ---
-title: "Blog 3: AWS S3 Bucket for Digital Healthcare System"
-date: 2026-06-15
-weight: 3
+title: "Blog 3: Optimizing AWS EC2 Costs with AWS Graviton"
+date: 2026-07-06
+weight: 6
 chapter: false
 ---
 
-# [FCAJ2026] AWS S3 Bucket: The Cloud-Native Storage "Missing Piece" for Digital Healthcare Systems
+# [FCAJ2026] Optimizing AWS EC2 Costs by Migrating to AWS Graviton (ARM)
 
 ## Introduction
 
-During the development of our **Digital Healthcare System**—an AI-assisted medical consultation and appointment management platform—we successfully implemented appointment scheduling, AI-powered consultation, and user authentication. However, another major challenge quickly emerged: **file storage and management**.
+When building cloud infrastructure, optimizing operational costs is just as important as improving application performance.
 
-The system continuously generates a wide variety of files, including:
+While evaluating infrastructure for a small production and testing environment, our team explored whether migrating workloads from traditional **x86-based Amazon EC2 instances** to **AWS Graviton (ARM)** could provide measurable cost savings without sacrificing performance.
 
-- **Patients:** Profile avatars, medical reports, and prescriptions in PDF format.
-- **Doctors & Staff:** Medical licenses, professional certificates, and supporting documents.
-- **AI Models:** Model weight files (`.pt`, `.bin`) that can reach hundreds of megabytes, along with AI consultation chat logs.
-
-At the beginning of development, it was convenient to store uploaded files inside the backend's `uploads/` directory and commit AI model weights directly into the Git repository.
-
-However, when preparing the application for production deployment, this approach quickly became unsustainable:
-
-- The Git repository became unnecessarily large.
-- The backend server turned into a **stateful** storage server.
-- Sensitive medical files faced significant security risks.
-- Scaling the application across multiple servers became much more difficult.
-
-To solve these problems, the project adopted **Amazon Simple Storage Service (Amazon S3)** as the centralized cloud storage solution.
+After benchmarking several containerized microservices built with **Node.js** and **Go**, the results showed that AWS Graviton delivered both lower infrastructure costs and improved resource utilization.
 
 ---
 
-## Practical Application in the Project
+## Benchmark Results
 
-Rather than allowing the backend server to store every uploaded file, all file-based resources were migrated to Amazon S3.
+The experiment was conducted using two EC2 instances hosting multiple containerized microservices.
 
-### Securing Doctor Practice Certificates
+### Migration Scenario
 
-Medical certificates and professional licenses contain highly sensitive personal information.
+- Original architecture: **t3.medium (x86)**
+- New architecture: **t4g.medium (AWS Graviton2 ARM)**
 
-These documents are stored inside a **private S3 bucket**.
+The comparison produced the following results.
 
-Whenever administrators need to review a doctor's credentials, the NestJS backend generates a **Presigned URL** with a short expiration time.
+| Metric | t3.medium | t4g.medium |
+|--------|----------:|-----------:|
+| On-Demand Price | $0.0416/hour | $0.0336/hour |
+| Monthly EC2 Cost | ~$60 | ~$48 |
+| Average CPU Utilization | ~45% | ~30% |
 
-Once the URL expires, access is automatically revoked, ensuring that confidential documents remain protected.
+The migration achieved:
 
----
-
-### Managing AI Model Weights
-
-AI model weight files (`model.pt`) are completely separated from the application source code.
-
-Instead of committing large files into Git, all training checkpoints and model weights are stored in Amazon S3.
-
-When the AI service starts, a Python initialization script automatically downloads the latest model weights from S3 before loading the model into memory.
-
-This architecture simplifies model version management while keeping the source repository clean and lightweight.
+- **19% lower hourly infrastructure cost**
+- **Approximately 33% lower CPU utilization**
+- Better overall resource efficiency for the same workloads
 
 ---
 
-### Storing Medical Reports and Chat Logs
+## Right-Sizing Opportunities
 
-After every AI consultation session, the system automatically:
+Lower CPU utilization created an opportunity to further optimize infrastructure.
 
-- Generates a PDF medical report.
-- Saves the AI conversation history.
-- Uploads both resources directly to Amazon S3.
+Instead of running:
 
-These files can later be downloaded by authorized users or retained for long-term storage and auditing purposes.
+- 2 × t3.medium
 
----
+the workload could comfortably operate on:
 
-## Benefits of Migrating to Amazon S3
+- 1 × t4g.medium
+- 1 × t4g.small
 
-Integrating Amazon S3 provided several significant advantages for the project.
+This additional right-sizing reduced monthly infrastructure costs even further.
 
-### Stateless Backend Architecture
+| Architecture | Monthly Cost |
+|--------------|-------------:|
+| Original | ~$60 |
+| Optimized | ~$42 |
 
-The NestJS backend now focuses entirely on business logic and API processing.
+Overall, the migration reduced EC2 costs by approximately **30%**, saving around **$18 per month** for this small environment.
 
-Since all static files are stored externally, backend servers remain stateless and can be scaled horizontally without worrying about synchronizing uploaded files between instances.
-
----
-
-### Enhanced Security for Medical Data
-
-Sensitive healthcare documents are never exposed through public file paths.
-
-Instead, access is controlled through:
-
-- AWS IAM permissions
-- Private S3 buckets
-- Time-limited Presigned URLs
-
-This ensures that only authorized users can access protected medical documents.
+Although the savings may appear modest, the impact becomes substantial when applied across dozens or hundreds of EC2 instances.
 
 ---
 
-### High Reliability with Cost Optimization
+## Migration Process
 
-Amazon S3 offers industry-leading durability of **99.999999999% (11 nines)**.
+### Build Multi-Architecture Docker Images
 
-In addition, AWS provides a generous Free Tier, allowing projects to store up to **5 GB** during the first 12 months.
+The CI/CD pipeline was updated using **GitHub Actions** together with Docker Buildx.
 
-By combining S3 Lifecycle Rules with storage classes such as **Amazon S3 Glacier**, temporary logs and infrequently accessed files can be archived automatically, keeping storage costs extremely low.
+Container images are now built for both:
+
+- `linux/amd64`
+- `linux/arm64`
+
+This allows the same deployment pipeline to support both Intel/AMD and AWS Graviton instances.
+
+---
+
+### Verify Application Compatibility
+
+Before migrating production workloads, every application dependency was tested on ARM64.
+
+Fortunately, most modern runtimes already provide excellent native ARM support, including:
+
+- Node.js
+- Go
+- Python
+- Java
+
+In our case, no application code changes were required.
+
+---
+
+### Deploy the New Infrastructure
+
+Infrastructure definitions managed with Terraform or CloudFormation were updated to launch AWS Graviton instances.
+
+Traffic was gradually shifted from the existing x86 instances to the new ARM-based instances before the original infrastructure was safely decommissioned.
+
+---
+
+## Why AWS Graviton Performs Better
+
+AWS Graviton processors are built specifically for cloud-native workloads.
+
+Compared with equivalent x86 instances, they typically provide:
+
+- Lower hourly pricing
+- Better price-to-performance ratio
+- Improved energy efficiency
+- Excellent performance for web services and containerized applications
+
+For many API services and backend workloads, Graviton offers sufficient computing power while consuming fewer infrastructure resources.
+
+---
+
+## Lessons Learned
+
+This migration highlighted two important optimization strategies.
+
+### Lower Infrastructure Cost
+
+Simply migrating from x86 instances to AWS Graviton reduced hourly EC2 pricing by nearly 20% without changing application functionality.
+
+---
+
+### Better Resource Utilization
+
+Because CPU utilization decreased significantly after migration, the infrastructure could be right-sized to smaller instance types, producing additional long-term savings.
+
+Instead of treating instance selection as a one-time decision, regularly reviewing workload utilization can uncover meaningful cost optimization opportunities.
 
 ---
 
 ## Conclusion
 
-Adopting cloud-native storage services such as Amazon S3 is an essential architectural practice for modern applications.
+Migrating workloads to AWS Graviton is one of the simplest ways to reduce AWS infrastructure costs while maintaining—or even improving—application performance.
 
-Instead of transforming backend servers into large file repositories with complex synchronization and security concerns, developers can delegate storage responsibilities to AWS.
+For containerized applications built with modern runtimes such as Node.js, Go, Python, or Java, the migration effort is often minimal thanks to widespread ARM64 support.
 
-This approach results in a more secure, scalable, and maintainable system while allowing engineering teams to focus entirely on delivering valuable business features rather than managing storage infrastructure.
+Combined with proper right-sizing and multi-architecture Docker images, AWS Graviton enables organizations to build more efficient, cost-effective cloud-native infrastructure.
 
 ---
 
 ## References
+Read the full article on **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233445714087055/)**.
 
-- AWS. **Amazon Simple Storage Service (S3) User Guide**  
-  https://docs.aws.amazon.com/AmazonS3/latest/userguide/
+- AWS. **AWS Graviton Processors**  
+  https://aws.amazon.com/ec2/graviton/
 
-- AWS. **Amazon S3 Overview**  
-  https://aws.amazon.com/s3/
+- AWS. **Amazon EC2 On-Demand Pricing**  
+  https://aws.amazon.com/ec2/pricing/on-demand/
+
+- AWS. **AWS Graviton Getting Started Guide**  
+  https://github.com/aws/aws-graviton-getting-started
+
+- Docker. **Multi-platform Builds**  
+  https://docs.docker.com/build/building/multi-platform/

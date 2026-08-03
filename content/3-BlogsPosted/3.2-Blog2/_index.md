@@ -1,119 +1,180 @@
 ---
-title: "Blog 2: AWS Cognito for Digital Healthcare System"
-date: 2026-06-08
-weight: 2
+title: "Blog 2: Troubleshooting AWS S3 Access Denied (403)"
+date: 2026-06-22
+weight: 4
 chapter: false
 ---
 
-# [FCAJ2026] What is AWS Cognito? Why is it an Indispensable Piece for Digital Healthcare Systems?
+# [FCAJ2026] Troubleshooting AWS S3 Access Denied (403) on EC2 – Lessons Learned
 
 ## Introduction
 
-During the development of the **Smart Healthcare Platform**—an AI-powered medical triage and appointment booking system—managing identity and multi-role access control became one of the biggest architectural challenges.
+During the deployment of our cloud-native application on AWS, I encountered one of the most common yet frustrating issues when integrating Amazon S3 with Amazon EC2:
 
-The platform supports three completely different user groups:
+> **AccessDenied (403 Forbidden)**
 
-- Patients
-- Doctors
-- Receptionists
+The application worked perfectly in the local development environment but immediately failed after deployment to EC2.
 
-Each role requires different permissions and access levels. Instead of building and maintaining a custom authentication service, **AWS Cognito** was integrated as a fully managed identity solution.
+Initially, I assumed the issue was simply caused by missing permissions. However, after several hours of debugging, I realized that Amazon S3 authorization involves multiple layers of security beyond a single IAM policy.
 
-This decision significantly simplified authentication, authorization, and user management while improving the overall security of the healthcare platform.
+This article summarizes the root causes, troubleshooting process, and lessons learned from resolving this issue.
 
 ---
 
-## What is AWS Cognito?
+## Why Did It Work Locally but Fail on EC2?
 
-AWS Cognito is a **Fully Managed Identity and Access Management** service that enables developers to authenticate and authorize users without building authentication infrastructure from scratch.
+During development, I authenticated using an **IAM User** configured through the AWS CLI.
 
-It provides two core components:
+The IAM user had the **AmazonS3FullAccess** managed policy attached, so every S3 operation succeeded.
 
-- **User Pools** for managing user accounts and authentication.
-- **Identity Pools** for granting authenticated users secure access to AWS resources.
+For production deployment, I followed AWS best practices and switched to using an **IAM Role (Instance Profile)** attached directly to the EC2 instance.
 
-By leveraging AWS Cognito, developers can focus on application features while AWS handles password management, token generation, user verification, and security best practices.
+Immediately after deployment, every request to Amazon S3 failed with:
 
----
+```
+AccessDenied (403 Forbidden)
+```
 
-## Solving Multi-Role Access Control
-
-One of the most important requirements of the Smart Healthcare Platform is supporting multiple user roles with different permissions.
-
-The system implements **Role-Based Access Control (RBAC)** using Cognito Groups.
-
-Each user belongs to a specific group, such as:
-
-- Patient
-- Doctor
-- Receptionist
-
-When users authenticate successfully, AWS Cognito issues a JWT token containing the **`cognito:groups`** attribute.
-
-The backend service validates the token and determines user permissions directly from the embedded group information, eliminating the need for complex authorization logic inside the application.
+After investigating the issue, I identified two major causes.
 
 ---
 
-## Secure Healthcare Staff Onboarding
+## Root Cause 1 – Incorrect Resource ARN
 
-Managing accounts for doctors and receptionists requires a secure onboarding process.
+One of the most common mistakes is using the wrong resource scope inside the IAM policy.
 
-Instead of creating passwords manually, administrators simply create staff accounts through the backend API.
+For example:
 
-AWS Cognito automatically:
+- **Bucket-level actions** such as `s3:ListBucket` require:
 
-- Creates the user account.
-- Sends an email containing a temporary password.
-- Requires the user to change the password during the first login.
+```
+arn:aws:s3:::my-bucket
+```
 
-This workflow improves security while reducing administrative effort.
+- **Object-level actions** such as:
 
----
+- GetObject
+- PutObject
+- DeleteObject
 
-## Secure Token Verification
+must instead use:
 
-The backend service, built with **NestJS**, does not store user passwords in the database.
+```
+arn:aws:s3:::my-bucket/*
+```
 
-Instead, every incoming JWT token is verified using AWS Cognito's public keys.
-
-This approach provides several advantages:
-
-- Passwords never exist inside backend databases.
-- Authentication follows industry security standards.
-- Token verification is simple, reliable, and scalable.
+Without the `/*` suffix, Amazon S3 immediately rejects object requests with an Access Denied error.
 
 ---
 
-## Protecting Sensitive Healthcare Data
+## Root Cause 2 – SSE-KMS Encryption
 
-Healthcare systems must comply with strict privacy and security requirements.
+Another hidden issue came from enabling **Server-Side Encryption with AWS KMS (SSE-KMS)**.
 
-To further protect user identities, the platform integrates a **UUID-based anonymization strategy**, preventing exposure of original internal identifiers.
+Although the IAM Role already had permission to access the S3 bucket, the EC2 instance was **not authorized to use the KMS key**.
 
-Combined with AWS Cognito authentication, this architecture provides an additional layer of protection for sensitive medical information.
+As a result:
+
+- Amazon S3 successfully located the object.
+- But AWS KMS refused to decrypt it.
+- The final response was still **403 Access Denied**.
+
+To resolve the issue, the EC2 IAM Role was added to the **KMS Key Policy** with permissions including:
+
+- `kms:Decrypt`
+- `kms:GenerateDataKey`
 
 ---
 
-## Cost Optimization
+## Troubleshooting Steps
 
-Another major advantage of AWS Cognito is its cost efficiency.
+### Step 1 – Review the EC2 IAM Role
 
-The service includes a generous **AWS Free Tier** that supports up to **50,000 Monthly Active Users (MAUs)**, making it an excellent choice for startups, student projects, and early-stage healthcare applications.
+Separate bucket-level permissions from object-level permissions.
 
-Since AWS manages the authentication infrastructure, there is no need to deploy or maintain dedicated authentication servers, reducing both operational complexity and infrastructure costs.
+Bucket actions:
+
+- `s3:ListBucket`
+
+Object actions:
+
+- `s3:GetObject`
+- `s3:PutObject`
+- `s3:DeleteObject`
+
+Verify that each action references the correct ARN.
+
+---
+
+### Step 2 – Review the KMS Key Policy
+
+If the bucket uses SSE-KMS encryption, ensure that the EC2 IAM Role is explicitly allowed to:
+
+- Decrypt objects
+- Generate data keys
+
+Without these permissions, S3 cannot return encrypted objects even if the bucket policy is correct.
+
+---
+
+### Step 3 – Check Other Security Layers
+
+Amazon S3 authorization involves multiple policy evaluation layers.
+
+When debugging Access Denied errors, verify:
+
+- Bucket Policy
+- IAM Policy
+- KMS Key Policy
+- Object Ownership configuration
+- Block Public Access settings
+- VPC Endpoint Policy (if applicable)
+
+Any explicit **Deny** in one layer overrides all Allow statements.
+
+---
+
+### Step 4 – Configure Monitoring
+
+To reduce future troubleshooting time, I configured Amazon CloudWatch to monitor permission failures.
+
+A Metric Filter searches for **AccessDenied** events and forwards alerts through Amazon SNS.
+
+This allows permission issues to be detected immediately without waiting for users to report failures.
+
+---
+
+## Lessons Learned
+
+This debugging experience highlighted several important AWS security concepts.
+
+- A working local environment does not guarantee a successful EC2 deployment because IAM Users and IAM Roles follow different permission models.
+
+- AccessDenied errors are not always caused by IAM policies. Bucket Policies, KMS Key Policies, Block Public Access settings, Object Ownership, and VPC Endpoint Policies can all affect authorization.
+
+- Always validate permissions using **IAM Policy Simulator** or **IAM Access Analyzer** before deploying applications.
+
+- If Amazon S3 uses **SSE-KMS**, always verify the KMS Key Policy in addition to the S3 permissions.
 
 ---
 
 ## Conclusion
 
-AWS Cognito is much more than a login service.
+Although the **S3 Access Denied (403)** error appears simple, troubleshooting it often requires understanding how multiple AWS security services interact.
 
-It provides a fully managed identity platform that simplifies authentication, authorization, user management, and security for modern cloud-native applications.
+By carefully reviewing IAM Roles, resource ARNs, Bucket Policies, KMS permissions, and monitoring configurations, I was able to completely resolve the issue and strengthen the security of the application's storage architecture.
 
-For digital healthcare systems, integrating AWS Cognito enables developers to offload the complexity of authentication infrastructure and dedicate their time to building features that improve patient care and healthcare workflows.
+Understanding these permission layers not only helps solve deployment problems faster but also leads to more secure and reliable cloud-native applications.
 
 ---
 
-## Read the Full Article
+## References
+Read the full article on **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233435944088032/)**.
+- AWS. **Troubleshoot Amazon S3 403 Access Denied Errors**  
+  https://repost.aws/knowledge-center/s3-troubleshoot-403
 
-See details [here](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2228021697962790/?rdid=MLFJXbxXfs8sMMKH)**
+- AWS. **IAM Roles for Amazon EC2**  
+  https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html
+
+- AWS. **IAM Policy Simulator**  
+  https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_testing-policies.html

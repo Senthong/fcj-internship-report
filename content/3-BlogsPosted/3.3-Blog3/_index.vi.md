@@ -1,125 +1,166 @@
 ---
-title: "Blog 3: AWS S3 Bucket cho Hệ thống Chăm sóc Sức khỏe Số"
-date: 2026-06-15
-weight: 3
+title: "Blog 3: Tối ưu chi phí AWS EC2 với AWS Graviton"
+date: 2026-07-06
+weight: 6
 chapter: false
 ---
 
-# [FCAJ2026] AWS S3 Bucket: Mảnh ghép lưu trữ Cloud-Native cho Hệ thống Chăm sóc Sức khỏe Số
+# [FCAJ2026] Tối ưu chi phí AWS EC2 bằng cách chuyển sang AWS Graviton (ARM)
 
 ## Giới thiệu
 
-Trong quá trình phát triển **Hệ thống Chăm sóc Sức khỏe Số (Digital Healthcare System)** — một nền tảng hỗ trợ tư vấn y tế bằng AI và quản lý lịch hẹn khám bệnh — nhóm chúng tôi đã triển khai thành công các chức năng như đặt lịch khám, tư vấn bằng AI và xác thực người dùng. Tuy nhiên, một thách thức quan trọng khác nhanh chóng xuất hiện: **lưu trữ và quản lý tệp tin**.
+Khi xây dựng hạ tầng trên nền tảng đám mây, việc tối ưu chi phí vận hành cũng quan trọng không kém việc cải thiện hiệu năng của ứng dụng.
 
-Hệ thống liên tục tạo ra nhiều loại dữ liệu khác nhau, bao gồm:
+Trong quá trình đánh giá hạ tầng cho một môi trường production và testing quy mô nhỏ, nhóm chúng tôi đã tìm hiểu liệu việc chuyển đổi từ các **Amazon EC2 Instance sử dụng kiến trúc x86** sang **AWS Graviton (ARM)** có thể mang lại mức tiết kiệm chi phí đáng kể mà vẫn duy trì hiệu năng hay không.
 
-- **Bệnh nhân:** Ảnh đại diện, báo cáo y tế và đơn thuốc ở định dạng PDF.
-- **Bác sĩ & Nhân viên:** Chứng chỉ hành nghề, bằng cấp chuyên môn và các tài liệu liên quan.
-- **Mô hình AI:** Các tệp trọng số (`.pt`, `.bin`) có dung lượng lên đến hàng trăm MB cùng với lịch sử hội thoại của AI.
-
-Ở giai đoạn đầu phát triển, việc lưu các tệp tải lên trong thư mục `uploads/` của backend và đưa trực tiếp các tệp trọng số AI vào kho mã nguồn Git là cách làm đơn giản và thuận tiện.
-
-Tuy nhiên, khi chuẩn bị triển khai hệ thống lên môi trường production, cách tiếp cận này nhanh chóng bộc lộ nhiều hạn chế:
-
-- Kho Git trở nên quá lớn và khó quản lý.
-- Máy chủ backend trở thành một máy chủ lưu trữ **stateful**.
-- Các tài liệu y tế nhạy cảm đối mặt với nhiều rủi ro về bảo mật.
-- Việc mở rộng hệ thống trên nhiều máy chủ trở nên phức tạp do phải đồng bộ dữ liệu.
-
-Để giải quyết những vấn đề này, dự án đã lựa chọn **Amazon Simple Storage Service (Amazon S3)** làm giải pháp lưu trữ tập trung trên nền tảng đám mây.
+Sau khi thực hiện benchmark trên nhiều microservice được đóng gói bằng Docker và xây dựng với **Node.js** và **Go**, kết quả cho thấy AWS Graviton không chỉ giúp giảm chi phí hạ tầng mà còn cải thiện hiệu quả sử dụng tài nguyên.
 
 ---
 
-## Ứng dụng thực tế trong dự án
+## Kết quả Benchmark
 
-Thay vì để backend lưu trữ toàn bộ các tệp do người dùng tải lên, tất cả tài nguyên dạng tệp đều được chuyển sang lưu trữ trên Amazon S3.
+Thử nghiệm được thực hiện trên hai EC2 Instance chạy nhiều microservice dạng container.
 
-### Bảo vệ chứng chỉ hành nghề của bác sĩ
+### Kịch bản chuyển đổi
 
-Chứng chỉ hành nghề và giấy phép y tế chứa nhiều thông tin cá nhân nhạy cảm.
+- Kiến trúc ban đầu: **t3.medium (x86)**
+- Kiến trúc mới: **t4g.medium (AWS Graviton2 ARM)**
 
-Các tài liệu này được lưu trữ trong một **S3 Bucket riêng tư (Private S3 Bucket)**.
+Kết quả so sánh như sau:
 
-Khi quản trị viên cần xem xét hồ sơ của bác sĩ, backend được xây dựng bằng NestJS sẽ tạo một **Presigned URL** với thời gian hiệu lực ngắn.
+| Chỉ số | t3.medium | t4g.medium |
+|--------|----------:|-----------:|
+| Giá On-Demand | $0.0416/giờ | $0.0336/giờ |
+| Chi phí EC2 hàng tháng | ~60 USD | ~48 USD |
+| Mức sử dụng CPU trung bình | ~45% | ~30% |
 
-Sau khi URL hết hạn, quyền truy cập sẽ tự động bị thu hồi, giúp đảm bảo các tài liệu quan trọng luôn được bảo vệ.
+Việc chuyển đổi mang lại:
 
----
-
-### Quản lý trọng số của mô hình AI
-
-Các tệp trọng số của mô hình AI (`model.pt`) được tách biệt hoàn toàn khỏi mã nguồn ứng dụng.
-
-Thay vì lưu các tệp dung lượng lớn trong Git, toàn bộ checkpoint và trọng số của mô hình được lưu trên Amazon S3.
-
-Khi dịch vụ AI khởi động, một script Python sẽ tự động tải phiên bản trọng số mới nhất từ S3 trước khi nạp mô hình vào bộ nhớ.
-
-Kiến trúc này giúp việc quản lý phiên bản mô hình trở nên đơn giản hơn, đồng thời giữ cho kho mã nguồn luôn gọn nhẹ.
+- **Giảm khoảng 19% chi phí EC2 theo giờ**
+- **Giảm khoảng 33% mức sử dụng CPU**
+- Hiệu quả sử dụng tài nguyên tốt hơn cho cùng một khối lượng công việc
 
 ---
 
-### Lưu trữ báo cáo y tế và lịch sử hội thoại
+## Cơ hội Right-Sizing
 
-Sau mỗi phiên tư vấn bằng AI, hệ thống sẽ tự động:
+Việc CPU được sử dụng ít hơn mở ra cơ hội tiếp tục tối ưu hạ tầng.
 
-- Tạo báo cáo y tế ở định dạng PDF.
-- Lưu lại lịch sử hội thoại giữa AI và người dùng.
-- Tải cả hai tài nguyên trực tiếp lên Amazon S3.
+Thay vì vận hành:
 
-Các tệp này có thể được người dùng được cấp quyền tải xuống hoặc lưu trữ lâu dài để phục vụ công tác kiểm toán và tra cứu sau này.
+- 2 × t3.medium
 
----
+Hệ thống vẫn hoạt động ổn định với:
 
-## Lợi ích khi sử dụng Amazon S3
+- 1 × t4g.medium
+- 1 × t4g.small
 
-Việc tích hợp Amazon S3 mang lại nhiều lợi ích quan trọng cho dự án.
+Việc **Right-Sizing** này tiếp tục giúp giảm chi phí hạ tầng hàng tháng.
 
-### Kiến trúc Backend Stateless
+| Kiến trúc | Chi phí hàng tháng |
+|------------|------------------:|
+| Ban đầu | ~60 USD |
+| Sau tối ưu | ~42 USD |
 
-Backend NestJS giờ đây chỉ tập trung xử lý logic nghiệp vụ và cung cấp API.
+Tổng cộng, việc chuyển đổi giúp giảm khoảng **30% chi phí EC2**, tương đương tiết kiệm khoảng **18 USD mỗi tháng** đối với môi trường thử nghiệm nhỏ.
 
-Do toàn bộ tệp tĩnh được lưu trữ bên ngoài, các máy chủ backend luôn ở trạng thái **stateless** và có thể mở rộng theo chiều ngang mà không cần đồng bộ các tệp tải lên giữa nhiều máy chủ.
-
----
-
-### Nâng cao bảo mật dữ liệu y tế
-
-Các tài liệu y tế nhạy cảm không bao giờ được truy cập thông qua các đường dẫn công khai.
-
-Thay vào đó, quyền truy cập được kiểm soát thông qua:
-
-- AWS IAM Permissions
-- Private S3 Bucket
-- Presigned URL có thời hạn
-
-Nhờ đó, chỉ những người dùng được cấp quyền mới có thể truy cập các tài liệu y tế được bảo vệ.
+Mặc dù con số này có vẻ không lớn, nhưng khi áp dụng cho hàng chục hoặc hàng trăm EC2 Instance, khoản tiết kiệm sẽ trở nên rất đáng kể.
 
 ---
 
-### Độ tin cậy cao với chi phí tối ưu
+## Quy trình chuyển đổi
 
-Amazon S3 cung cấp độ bền dữ liệu lên tới **99.999999999% (11 số 9)**, thuộc hàng cao nhất trong ngành.
+### Xây dựng Docker Image đa kiến trúc
 
-Bên cạnh đó, AWS còn cung cấp **Free Tier**, cho phép lưu trữ miễn phí tới **5 GB** trong 12 tháng đầu tiên.
+Pipeline CI/CD được cập nhật bằng **GitHub Actions** kết hợp với Docker Buildx.
 
-Kết hợp với **S3 Lifecycle Rules** và các lớp lưu trữ như **Amazon S3 Glacier**, các tệp ít được truy cập hoặc nhật ký tạm thời có thể được tự động lưu trữ lâu dài, giúp tối ưu đáng kể chi phí lưu trữ.
+Docker Image hiện được build đồng thời cho cả hai nền tảng:
+
+- `linux/amd64`
+- `linux/arm64`
+
+Điều này cho phép cùng một pipeline triển khai trên cả Intel/AMD và AWS Graviton.
+
+---
+
+### Kiểm tra khả năng tương thích của ứng dụng
+
+Trước khi chuyển sang môi trường production, toàn bộ thư viện và dependency của ứng dụng được kiểm thử trên kiến trúc ARM64.
+
+May mắn là hầu hết các runtime hiện đại đều đã hỗ trợ ARM rất tốt, bao gồm:
+
+- Node.js
+- Go
+- Python
+- Java
+
+Trong trường hợp của nhóm chúng tôi, không cần thay đổi bất kỳ dòng mã nguồn nào.
+
+---
+
+### Triển khai hạ tầng mới
+
+Các tệp định nghĩa hạ tầng bằng Terraform hoặc CloudFormation được cập nhật để khởi tạo AWS Graviton Instance.
+
+Lưu lượng truy cập được chuyển dần từ các EC2 Instance sử dụng x86 sang các Instance ARM trước khi hạ tầng cũ được ngừng hoạt động hoàn toàn.
+
+---
+
+## Vì sao AWS Graviton có hiệu năng tốt hơn?
+
+Bộ xử lý AWS Graviton được thiết kế chuyên biệt cho các ứng dụng cloud-native.
+
+So với các EC2 Instance sử dụng kiến trúc x86 tương đương, AWS Graviton thường mang lại:
+
+- Chi phí theo giờ thấp hơn.
+- Tỷ lệ hiệu năng trên chi phí (Price-to-Performance) tốt hơn.
+- Hiệu quả sử dụng năng lượng cao hơn.
+- Hiệu năng rất tốt đối với các dịch vụ web và ứng dụng container.
+
+Đối với phần lớn các API và backend service, AWS Graviton cung cấp đủ năng lực xử lý trong khi tiêu thụ ít tài nguyên hạ tầng hơn.
+
+---
+
+## Bài học rút ra
+
+Quá trình chuyển đổi này cho thấy hai chiến lược tối ưu quan trọng.
+
+### Giảm chi phí hạ tầng
+
+Chỉ cần chuyển từ các EC2 Instance sử dụng x86 sang AWS Graviton đã giúp giảm gần **20% chi phí EC2 theo giờ** mà không cần thay đổi chức năng của ứng dụng.
+
+---
+
+### Nâng cao hiệu quả sử dụng tài nguyên
+
+Do mức sử dụng CPU giảm đáng kể sau khi chuyển đổi, hạ tầng có thể được **Right-Sizing** xuống các loại Instance nhỏ hơn, từ đó tiếp tục tiết kiệm chi phí trong dài hạn.
+
+Thay vì xem việc lựa chọn EC2 Instance là quyết định chỉ thực hiện một lần, việc thường xuyên đánh giá mức sử dụng tài nguyên sẽ giúp phát hiện nhiều cơ hội tối ưu chi phí.
 
 ---
 
 ## Kết luận
 
-Việc áp dụng các dịch vụ lưu trữ cloud-native như Amazon S3 là một thực tiễn kiến trúc quan trọng đối với các ứng dụng hiện đại.
+Chuyển đổi khối lượng công việc sang AWS Graviton là một trong những cách đơn giản và hiệu quả nhất để giảm chi phí hạ tầng AWS trong khi vẫn duy trì, thậm chí cải thiện hiệu năng của ứng dụng.
 
-Thay vì biến máy chủ backend thành nơi lưu trữ tệp với nhiều vấn đề về đồng bộ và bảo mật, nhà phát triển có thể giao toàn bộ trách nhiệm lưu trữ cho AWS.
+Đối với các ứng dụng container hiện đại được xây dựng bằng Node.js, Go, Python hoặc Java, quá trình chuyển đổi thường rất thuận lợi nhờ sự hỗ trợ rộng rãi của kiến trúc ARM64.
 
-Cách tiếp cận này giúp xây dựng một hệ thống an toàn hơn, dễ mở rộng hơn và dễ bảo trì hơn, đồng thời cho phép đội ngũ phát triển tập trung vào việc xây dựng các tính năng mang lại giá trị cho người dùng thay vì quản lý hạ tầng lưu trữ.
+Kết hợp với chiến lược **Right-Sizing** và Docker Image đa kiến trúc, AWS Graviton giúp các tổ chức xây dựng hạ tầng cloud-native hiệu quả hơn, tiết kiệm hơn và sẵn sàng mở rộng trong tương lai.
 
 ---
 
 ## Tài liệu tham khảo
 
-- AWS. **Hướng dẫn sử dụng Amazon Simple Storage Service (S3)**  
-  https://docs.aws.amazon.com/AmazonS3/latest/userguide/
+Đọc bài viết đầy đủ trên **[AWS Study Group](https://www.facebook.com/groups/awsstudygroupfcj/permalink/2233445714087055/)**.
 
-- AWS. **Tổng quan về Amazon S3**  
-  https://aws.amazon.com/s3/
+- AWS. **AWS Graviton Processors**  
+  https://aws.amazon.com/ec2/graviton/
+
+- AWS. **Amazon EC2 On-Demand Pricing**  
+  https://aws.amazon.com/ec2/pricing/on-demand/
+
+- AWS. **AWS Graviton Getting Started Guide**  
+  https://github.com/aws/aws-graviton-getting-started
+
+- Docker. **Multi-platform Builds**  
+  https://docs.docker.com/build/building/multi-platform/
