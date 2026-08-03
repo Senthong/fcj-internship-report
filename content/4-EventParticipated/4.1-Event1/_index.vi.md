@@ -1,6 +1,6 @@
 ---
 title: "FCAJ Community Day - Tháng 6/2026"
-date: 2026-06-01
+date: 2026-06-20
 weight: 1
 chapter: false
 pre: " <b> 4.1. </b> "
