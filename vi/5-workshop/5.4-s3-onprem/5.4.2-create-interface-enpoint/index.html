@@ -1,0 +1,418 @@
+<!doctype html><html lang=vi class="js csstransforms3d"><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=generator content="Hugo 0.134.3"><meta name=description content><meta name=author content="thienlh@thienlu.com"><link rel=icon href=/fcj-internship-report/images/favicon.png type=image/png><title>5.4.2 - Xây dựng Tầng Data Mart (Data Mart Models) :: Báo cáo thực tập</title>
+<link href=/fcj-internship-report/css/nucleus.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/fontawesome-all.min.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/hybrid.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/featherlight.min.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/perfect-scrollbar.min.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/auto-complete.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/atom-one-dark-reasonable.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/theme.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/hugo-theme.css?1786110378 rel=stylesheet><link href=/fcj-internship-report/css/theme-workshop.css?1786110378 rel=stylesheet><script src=/fcj-internship-report/js/jquery-3.3.1.min.js?1786110378></script><style>:root #header+#content>#left>#rlblock_left{display:none!important}</style></head><body data-url=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.2-create-interface-enpoint/><nav id=sidebar class=showVisitedLinks><div id=header-wrapper><div id=header><a id=logo href=/><svg id="Layer_1" data-name="Layer 1" viewBox="0 0 60 30" width="30%"><defs><style>.cls-1{fill:#fff}.cls-2{fill:#fff;fill-rule:evenodd}</style></defs><title>AWS-Logo_White-Color</title><path class="cls-1" d="M14.09 10.85a4.7 4.7.0 00.19 1.48 7.73 7.73.0 00.54 1.19.77.77.0 01.12.38.64.64.0 01-.32.49l-1 .7a.83.83.0 01-.44.15.69.69.0 01-.49-.23 3.8 3.8.0 01-.6-.77q-.25-.42-.51-1a6.14 6.14.0 01-4.89 2.3 4.54 4.54.0 01-3.32-1.19 4.27 4.27.0 01-1.22-3.2 4.28 4.28.0 011.46-3.4A6.06 6.06.0 017.69 6.46a12.47 12.47.0 011.76.13q.92.13 1.91.36V5.73a3.65 3.65.0 00-.79-2.66A3.81 3.81.0 007.86 2.3a7.71 7.71.0 00-1.79.22 12.78 12.78.0 00-1.79.57 4.55 4.55.0 01-.58.22h-.26q-.35.0-.35-.52V2a1.09 1.09.0 01.12-.58 1.2 1.2.0 01.47-.35A10.88 10.88.0 015.77.32 10.19 10.19.0 018.36.0a6 6 0 014.35 1.35 5.49 5.49.0 011.38 4.09zM7.34 13.38a5.36 5.36.0 001.72-.31A3.63 3.63.0 0010.63 12 2.62 2.62.0 0011.19 11a5.63 5.63.0 00.16-1.44v-.7a14.35 14.35.0 00-1.53-.28 12.37 12.37.0 00-1.56-.1 3.84 3.84.0 00-2.47.67A2.34 2.34.0 005 11a2.35 2.35.0 00.61 1.76A2.4 2.4.0 007.34 13.38zm13.35 1.8a1 1 0 01-.64-.16 1.3 1.3.0 01-.35-.65L15.81 1.51a3 3 0 01-.15-.67.36.36.0 01.41-.41H17.7a1 1 0 01.65.16 1.4 1.4.0 01.33.65l2.79 11 2.59-11A1.17 1.17.0 0124.39.6a1.1 1.1.0 01.67-.16H26.4a1.1 1.1.0 01.67.16 1.17 1.17.0 01.32.65L30 12.39 32.88 1.25A1.39 1.39.0 0133.22.6a1 1 0 01.65-.16h1.54a.36.36.0 01.41.41 1.36 1.36.0 010 .26 3.64 3.64.0 01-.12.41l-4 12.86a1.3 1.3.0 01-.35.65 1 1 0 01-.64.16H29.25a1 1 0 01-.67-.17 1.26 1.26.0 01-.32-.67L25.67 3.64l-2.56 10.7a1.26 1.26.0 01-.32.67 1 1 0 01-.67.17zm21.36.44a11.28 11.28.0 01-2.56-.29 7.44 7.44.0 01-1.92-.67 1 1 0 01-.61-.93v-.84q0-.52.38-.52a.9.9.0 01.31.06l.42.17a8.77 8.77.0 001.83.58 9.78 9.78.0 002 .2 4.48 4.48.0 002.43-.55 1.76 1.76.0 00.86-1.57 1.61 1.61.0 00-.45-1.16A4.29 4.29.0 0043 9.22l-2.41-.76A5.15 5.15.0 0138 6.78a3.94 3.94.0 01-.83-2.41 3.7 3.7.0 01.45-1.85 4.47 4.47.0 011.19-1.37 5.27 5.27.0 011.7-.86A7.4 7.4.0 0142.6.0a8.87 8.87.0 011.12.07q.57.07 1.08.19t.95.26a4.27 4.27.0 01.7.29 1.59 1.59.0 01.49.41.94.94.0 01.15.55v.79q0 .52-.38.52a1.76 1.76.0 01-.64-.2 7.74 7.74.0 00-3.2-.64 4.37 4.37.0 00-2.21.47 1.6 1.6.0 00-.79 1.48 1.58 1.58.0 00.49 1.18 4.94 4.94.0 001.83.92L44.55 7a5.08 5.08.0 012.57 1.6A3.76 3.76.0 0147.9 11a4.21 4.21.0 01-.44 1.93 4.4 4.4.0 01-1.21 1.47 5.43 5.43.0 01-1.85.93A8.25 8.25.0 0142.05 15.62z"/><path class="cls-2" d="M45.19 23.81C39.72 27.85 31.78 30 25 30A36.64 36.64.0 01.22 20.57c-.51-.46-.06-1.09.56-.74A49.78 49.78.0 0025.53 26.4 49.23 49.23.0 0044.4 22.53C45.32 22.14 46.1 23.14 45.19 23.81z"/><path class="cls-2" d="M47.47 21.21c-.7-.9-4.63-.42-6.39-.21-.53.06-.62-.4-.14-.74 3.13-2.2 8.27-1.57 8.86-.83s-.16 5.89-3.09 8.35c-.45.38-.88.18-.68-.32C46.69 25.8 48.17 22.11 47.47 21.21z"/></svg></a></div><div class=searchbox><label for=search-by><i class="fas fa-search"></i></label>
+<input data-search-input id=search-by type=search placeholder=Search...>
+<span data-search-clear><i class="fas fa-times"></i></span></div><script type=text/javascript src=/fcj-internship-report/js/lunr.min.js?1786110378></script><script type=text/javascript src=/fcj-internship-report/js/auto-complete.js?1786110378></script><script type=text/javascript>var baseurl="https://senthong.github.io/fcj-internship-report//vi"</script><script type=text/javascript src=/fcj-internship-report/js/search.js?1786110378></script></div><div class=highlightable><ul class=topics><li data-nav-id=/fcj-internship-report/vi/1-worklog/ title=Worklog class=dd-item><a href=/fcj-internship-report/vi/1-worklog/><b>1. </b>Worklog
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.1-week1/ title="Worklog Tuần 1" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.1-week1/><b>1.1. </b>Worklog Tuần 1
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.2-week2/ title="Worklog Tuần 2" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.2-week2/><b>1.2. </b>Worklog Tuần 2
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.3-week3/ title="Worklog Tuần 3" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.3-week3/><b>1.3. </b>Worklog Tuần 3
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.4-week4/ title="Worklog Tuần 4" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.4-week4/><b>1.4. </b>Worklog Tuần 4
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.5-week5/ title="Worklog Tuần 5" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.5-week5/><b>1.5. </b>Worklog Tuần 5
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.6-week6/ title="Worklog Tuần 6" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.6-week6/><b>1.6. </b>Worklog Tuần 6
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.7-week7/ title="Worklog Tuần 7" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.7-week7/><b>1.7. </b>Worklog Tuần 7
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/1-worklog/1.8-week8/ title="Worklog Tuần 8" class=dd-item><a href=/fcj-internship-report/vi/1-worklog/1.8-week8/><b>1.8. </b>Worklog Tuần 8
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/fcj-internship-report/vi/2-proposal/ title="Bản đề xuất" class=dd-item><a href=/fcj-internship-report/vi/2-proposal/><b>2. </b>Bản đề xuất
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/3-blogsposted/ title="Các bài blog đã đăng" class=dd-item><a href=/fcj-internship-report/vi/3-blogsposted/><b>3. </b>Các bài blog đã đăng
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/fcj-internship-report/vi/3-blogsposted/3.1-blog1/ title="01. AWS Glue và AWS Lambda + Polars" class=dd-item><a href=/fcj-internship-report/vi/3-blogsposted/3.1-blog1/>01. AWS Glue và AWS Lambda + Polars
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/3-blogsposted/3.2-blog2/ title="02. Truy tìm và tiêu diệt các tài nguyên Zombies trên AWS" class=dd-item><a href=/fcj-internship-report/vi/3-blogsposted/3.2-blog2/>02. Truy tìm và tiêu diệt các tài nguyên Zombies trên AWS
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/3-blogsposted/3.3-blog3/ title="03. Tối ưu chi phí AWS EC2 với AWS Graviton" class=dd-item><a href=/fcj-internship-report/vi/3-blogsposted/3.3-blog3/>03. Tối ưu chi phí AWS EC2 với AWS Graviton
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/fcj-internship-report/vi/4-eventparticipated/ title="Sự kiện đã tham gia" class=dd-item><a href=/fcj-internship-report/vi/4-eventparticipated/><b>4. </b>Sự kiện đã tham gia
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/fcj-internship-report/vi/4-eventparticipated/4.1-event1/ title="FCAJ Community Day - Tháng 6/2026" class=dd-item><a href=/fcj-internship-report/vi/4-eventparticipated/4.1-event1/><b>4.1. </b>FCAJ Community Day - Tháng 6/2026
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/4-eventparticipated/4.2-event2/ title="FCAJ - Agentic AI Build Week" class=dd-item><a href=/fcj-internship-report/vi/4-eventparticipated/4.2-event2/><b>4.2. </b>FCAJ - Agentic AI Build Week
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/ title="Triển khai hệ thống E-Commerce Data Pipeline" class="dd-item
+parent"><a href=/fcj-internship-report/vi/5-workshop/><b>5. </b>Triển khai hệ thống E-Commerce Data Pipeline
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.1-workshop-overview/ title="Tổng quan hệ thống" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.1-workshop-overview/><b>5.1. </b>Tổng quan hệ thống
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.2-prerequiste/ title="Chuẩn bị môi trường triển khai" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.2-prerequiste/><b>5.2. </b>Chuẩn bị môi trường triển khai
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.3-s3-vpc/ title="Triển khai tầng lưu trữ và kho dữ liệu trên AWS" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.3-s3-vpc/><b>5.3. </b>Triển khai tầng lưu trữ và kho dữ liệu trên AWS
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.3-s3-vpc/5.3.1-create-gwe/ title="Khởi tạo hạ tầng lưu trữ và kết nối riêng tới Amazon S3" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.3-s3-vpc/5.3.1-create-gwe/><b>5.3.1 </b>Khởi tạo hạ tầng lưu trữ và kết nối riêng tới Amazon S3
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.3-s3-vpc/5.3.2-test-gwe/ title="Kiểm tra kết nối và cấu hình dbt Profile" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.3-s3-vpc/5.3.2-test-gwe/><b>5.3.2 </b>Kiểm tra kết nối và cấu hình dbt Profile
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/ title="Triển khai Pipeline ELT & Transformations" class="dd-item
+parent"><a href=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/><b>5.4. </b>Triển khai Pipeline ELT & Transformations
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.1-prepare/ title="Chuẩn bị Tầng Staging (Ingestion & Staging Models)" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.1-prepare/><b>5.4.1 </b>Chuẩn bị Tầng Staging (Ingestion & Staging Models)
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.2-create-interface-enpoint/ title="5.4.2 - Xây dựng Tầng Data Mart (Data Mart Models)" class="dd-item
+active"><a href=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.2-create-interface-enpoint/><b>5.4.2 </b>5.4.2 - Xây dựng Tầng Data Mart (Data Mart Models)
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.3-test-endpoint/ title="Điều phối bằng Airflow & Kiểm thử Chất lượng Dữ liệu" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.3-test-endpoint/><b>5.4.3 </b>Điều phối bằng Airflow & Kiểm thử Chất lượng Dữ liệu
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.5-policy/ title="Cấu hình Quản trị & Phân quyền" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.5-policy/><b>5.5 </b>Cấu hình Quản trị & Phân quyền
+<i class="fas fa-check read-icon"></i></a></li><li data-nav-id=/fcj-internship-report/vi/5-workshop/5.6-cleanup/ title="Dọn dẹp tài nguyên" class=dd-item><a href=/fcj-internship-report/vi/5-workshop/5.6-cleanup/><b>5.6. </b>Dọn dẹp tài nguyên
+<i class="fas fa-check read-icon"></i></a></li></ul></li></ul><section id=shortcuts><h3>More</h3><ul><li><a class=padding href=http://awsstudygroup.com><i class='fab fa-aws'></i> AWS Study Group - Blog</a></li><li><a class=padding href=https://www.facebook.com/groups/awsstudygroupfcj><i class='fab fa-facebook'></i> AWS Study Group - Nhóm FB</a></li></ul></section><section id=prefooter><hr><ul><li><a class=padding><i class="fas fa-language fa-fw"></i><div class=select-style><select id=select-language onchange="location=this.value"><option id=en value=https://senthong.github.io/fcj-internship-report/5-workshop/5.4-s3-onprem/5.4.2-create-interface-enpoint/>English</option><option id=vi value=https://senthong.github.io/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.2-create-interface-enpoint/ selected>Tiếng Việt</option></select><svg id="Capa_1" xmlns:xlink="http://www.w3.org/1999/xlink" width="255" height="255" viewBox="0 0 255 255" style="enable-background:new 0 0 255 255"><g><g id="arrow-drop-down"><polygon points="0,63.75 127.5,191.25 255,63.75"/></g></g></svg></div></a></li><li><a class=padding href=# data-clear-history-toggle><i class="fas fa-history fa-fw"></i> Clear History</a></li></ul></section><section id=footer><left><br><br><b>Last Updated</b><br><i><font color=orange>07-08-2026</font>
+</i></left><left><br><br><b>Team</b><br><i><a href=https://www.facebook.com/groups/660548818043427 style=color:orange>First Cloud AI Journey</a>
+</i></left><script async defer src=https://buttons.github.io/buttons.js></script></section></div></nav><section id=body><div id=overlay></div><div class="padding highlightable"><div><div id=top-bar><div id=breadcrumbs itemscope itemtype=http://data-vocabulary.org/Breadcrumb><span id=sidebar-toggle-span><a href=# id=sidebar-toggle data-sidebar-toggle><i class="fas fa-bars"></i>
+</a></span><span id=toc-menu><i class="fas fa-list-alt"></i></span>
+<span class=links><a href=/fcj-internship-report/vi/>Báo cáo thực tập</a> > <a href=/fcj-internship-report/vi/5-workshop/>Triển khai hệ thống E-Commerce Data Pipeline</a> > <a href=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/>Triển khai Pipeline ELT & Transformations</a> > 5.4.2 - Xây dựng Tầng Data Mart (Data Mart Models)</span></div><div class=progress><div class=wrapper><nav id=TableOfContents><ul><li><a href=#1-tổ-chức-theo-nhóm-nghiệp-vụ>1. Tổ chức theo nhóm nghiệp vụ</a></li><li><a href=#2-revenue_daily---báo-cáo-doanh-thu-theo-ngày>2. <code>revenue_daily</code> - Báo cáo doanh thu theo ngày</a></li><li><a href=#3-category_revenue_monthly---doanh-thu-theo-danh-mục-sản-phẩm>3. <code>category_revenue_monthly</code> - Doanh thu theo danh mục sản phẩm</a></li><li><a href=#4-fct_customer_cohorts---phân-tích-cohort-và-tỷ-lệ-giữ-chân-khách-hàng>4. <code>fct_customer_cohorts</code> - Phân tích cohort và tỷ lệ giữ chân khách hàng</a></li><li><a href=#5-seller_performance---bảng-điểm-hiệu-suất-người-bán>5. <code>seller_performance</code> - Bảng điểm hiệu suất người bán</a></li></ul></nav></div></div></div></div><div id=head-tags></div><div id=body-inner><h1>5.4.2 - Xây dựng Tầng Data Mart (Data Mart Models)</h1><p>Nếu tầng Staging ở mục 5.4.1 có nhiệm vụ làm sạch và chuẩn hóa dữ liệu ở mức bản ghi, thì tầng Data Mart (tầng Gold) tổng hợp những dữ liệu đã sạch đó thành các bảng trả lời trực tiếp cho câu hỏi nghiệp vụ cụ thể. Đây là tầng dữ liệu mà các công cụ BI hoặc nhà phân tích sẽ truy vấn trực tiếp, nên mỗi model ở tầng này được vật chất hóa dưới dạng bảng (<code>+materialized: table</code>) thay vì view, nhằm đảm bảo tốc độ truy vấn ổn định và không phải tính toán lại logic tổng hợp mỗi lần có yêu cầu.</p><h2 id=1-tổ-chức-theo-nhóm-nghiệp-vụ>1. Tổ chức theo nhóm nghiệp vụ</h2><p>Bốn Data Mart của dự án được chia vào ba thư mục con dưới <code>models/mart/</code>, tương ứng ba nhóm nghiệp vụ độc lập:</p><table><thead><tr><th style=text-align:left>Nhóm nghiệp vụ</th><th style=text-align:left>Thư mục</th><th style=text-align:left>Model</th><th style=text-align:left>Câu hỏi nghiệp vụ trả lời</th></tr></thead><tbody><tr><td style=text-align:left>Tài chính</td><td style=text-align:left><code>mart/finance/</code></td><td style=text-align:left><code>revenue_daily</code></td><td style=text-align:left>Doanh thu, số đơn, tỷ lệ hủy đơn biến động thế nào theo từng ngày?</td></tr><tr><td style=text-align:left>Tài chính</td><td style=text-align:left><code>mart/finance/</code></td><td style=text-align:left><code>category_revenue_monthly</code></td><td style=text-align:left>Danh mục sản phẩm nào đóng góp doanh thu nhiều nhất mỗi tháng?</td></tr><tr><td style=text-align:left>Khách hàng</td><td style=text-align:left><code>mart/customers/</code></td><td style=text-align:left><code>fct_customer_cohorts</code></td><td style=text-align:left>Khách hàng mua lần đầu trong tháng X còn quay lại mua tiếp bao nhiêu ở các tháng sau?</td></tr><tr><td style=text-align:left>Vận hành</td><td style=text-align:left><code>mart/operations/</code></td><td style=text-align:left><code>seller_performance</code></td><td style=text-align:left>Người bán nào đang hoạt động tốt, người bán nào cần cải thiện giao hàng/chất lượng?</td></tr></tbody></table><p>Cách phân nhóm này không chỉ mang tính tổ chức thư mục, mà còn ánh xạ trực tiếp sang schema và tag được gán trong <code>dbt_project.yml</code> (trình bày đầy đủ ở mục 5.5), cho phép chạy chọn lọc từng nhóm bằng <code>dbt run --select mart.finance</code> khi cần, thay vì luôn phải chạy lại toàn bộ tầng Gold.</p><p>Cả bốn model đều tuân theo một mẫu thiết kế chung: các CTE (Common Table Expression) đầu vào chỉ <code>select * from {{ ref('stg_...') }}</code>, tiếp theo là một hoặc nhiều CTE tổng hợp trung gian, và kết thúc bằng một CTE <code>final</code> duy nhất được <code>select</code> ra. Cách viết này giúp mỗi bước biến đổi có thể đọc và kiểm tra độc lập, đồng thời hạn chế lỗi phổ biến nhất khi viết SQL phân tích: <strong>fanout join</strong> - hiện tượng số dòng bị nhân lên sai lệch khi JOIN các bảng có quan hệ một-nhiều mà không tổng hợp trước.</p><h2 id=2-revenue_daily---báo-cáo-doanh-thu-theo-ngày>2. <code>revenue_daily</code> - Báo cáo doanh thu theo ngày</h2><p>Model này có hạt dữ liệu (grain) là một dòng cho mỗi ngày (<code>order_date</code>), tổng hợp GMV (Gross Merchandise Value), doanh thu gộp phí vận chuyển, giá trị đơn hàng trung bình, tỷ lệ giao trễ và tỷ lệ hủy đơn.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=display:flex><span><span style=color:#75715e>-- models/mart/finance/revenue_daily.sql
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- 
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Daily GMV (Gross Merchandise Value) report.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Joins orders + order_items + payments to get true revenue per day.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Materialized as TABLE on Redshift with sort/dist keys for fast BI queries.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>--
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Key metrics:
+</span></span></span><span style=display:flex><span><span style=color:#75715e>--   gmv         — sum of item prices (pre-freight)
+</span></span></span><span style=display:flex><span><span style=color:#75715e>--   total_revenue — gmv + freight
+</span></span></span><span style=display:flex><span><span style=color:#75715e>--   avg_order_value — revenue / distinct orders
+</span></span></span><span style=display:flex><span><span style=color:#75715e>--   cancellation_rate — % orders canceled that day
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>{{</span>
+</span></span><span style=display:flex><span>    config(
+</span></span><span style=display:flex><span>        materialized<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;table&#39;</span>,
+</span></span><span style=display:flex><span>        sort<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;order_date&#39;</span>,
+</span></span><span style=display:flex><span>        dist<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;order_date&#39;</span>,
+</span></span><span style=display:flex><span>        tags<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#39;mart&#39;</span>, <span style=color:#e6db74>&#39;finance&#39;</span>, <span style=color:#e6db74>&#39;daily&#39;</span>]
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>with</span> orders <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_orders&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>where</span> order_date <span style=color:#f92672>&gt;=</span> <span style=color:#e6db74>&#39;{{ var(&#34;start_date&#34;) }}&#39;</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>items <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_order_items&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>payments <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        order_id,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>sum</span>(payment_value)    <span style=color:#66d9ef>as</span> total_payment_value,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>max</span>(payment_type)     <span style=color:#66d9ef>as</span> primary_payment_type   <span style=color:#75715e>-- simplification for 1-row-per-order
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>    <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_order_payments&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>order_revenue <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        o.order_id,
+</span></span><span style=display:flex><span>        o.order_date,
+</span></span><span style=display:flex><span>        o.order_status,
+</span></span><span style=display:flex><span>        o.is_delivered,
+</span></span><span style=display:flex><span>        o.is_late_delivery,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>sum</span>(i.item_price)           <span style=color:#66d9ef>as</span> gmv,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>sum</span>(i.freight_value)        <span style=color:#66d9ef>as</span> freight_revenue,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>sum</span>(i.total_item_revenue)   <span style=color:#66d9ef>as</span> gross_revenue,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> i.product_id) <span style=color:#66d9ef>as</span> distinct_products,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(i.order_item_id)      <span style=color:#66d9ef>as</span> item_count,
+</span></span><span style=display:flex><span>        p.total_payment_value,
+</span></span><span style=display:flex><span>        p.primary_payment_type
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> orders o
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>left</span> <span style=color:#66d9ef>join</span> items i    <span style=color:#66d9ef>on</span> o.order_id <span style=color:#f92672>=</span> i.order_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>left</span> <span style=color:#66d9ef>join</span> payments p <span style=color:#66d9ef>on</span> o.order_id <span style=color:#f92672>=</span> p.order_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>, <span style=color:#ae81ff>3</span>, <span style=color:#ae81ff>4</span>, <span style=color:#ae81ff>5</span>, p.total_payment_value, p.primary_payment_type
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>daily_aggregated <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        order_date,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Volume
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> order_id)                                <span style=color:#66d9ef>as</span> total_orders,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> is_delivered <span style=color:#66d9ef>then</span> order_id <span style=color:#66d9ef>end</span>) <span style=color:#66d9ef>as</span> delivered_orders,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> order_status <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;canceled&#39;</span>
+</span></span><span style=display:flex><span>                           <span style=color:#66d9ef>then</span> order_id <span style=color:#66d9ef>end</span>)                   <span style=color:#66d9ef>as</span> canceled_orders,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Revenue
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        round(<span style=color:#66d9ef>sum</span>(gmv), <span style=color:#ae81ff>2</span>)                                      <span style=color:#66d9ef>as</span> gmv,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>sum</span>(freight_revenue), <span style=color:#ae81ff>2</span>)                          <span style=color:#66d9ef>as</span> freight_revenue,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>sum</span>(gross_revenue), <span style=color:#ae81ff>2</span>)                            <span style=color:#66d9ef>as</span> total_revenue,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>avg</span>(gross_revenue), <span style=color:#ae81ff>2</span>)                            <span style=color:#66d9ef>as</span> avg_order_value,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Delivery quality
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        round(
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>100</span>.<span style=color:#ae81ff>0</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> is_late_delivery <span style=color:#66d9ef>then</span> order_id <span style=color:#66d9ef>end</span>)
+</span></span><span style=display:flex><span>            <span style=color:#f92672>/</span> <span style=color:#66d9ef>nullif</span>(<span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> is_delivered <span style=color:#66d9ef>then</span> order_id <span style=color:#66d9ef>end</span>), <span style=color:#ae81ff>0</span>),
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        )                                                       <span style=color:#66d9ef>as</span> late_delivery_pct,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Cancellation rate
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        round(
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>100</span>.<span style=color:#ae81ff>0</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> order_status <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;canceled&#39;</span>
+</span></span><span style=display:flex><span>                                        <span style=color:#66d9ef>then</span> order_id <span style=color:#66d9ef>end</span>)
+</span></span><span style=display:flex><span>            <span style=color:#f92672>/</span> <span style=color:#66d9ef>nullif</span>(<span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> order_id), <span style=color:#ae81ff>0</span>),
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        )                                                       <span style=color:#66d9ef>as</span> cancellation_rate_pct,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Items
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#66d9ef>sum</span>(item_count)                                         <span style=color:#66d9ef>as</span> total_items_sold,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>avg</span>(item_count), <span style=color:#ae81ff>2</span>)                               <span style=color:#66d9ef>as</span> avg_items_per_order,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Payment mix
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#66d9ef>sum</span>(<span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> primary_payment_type <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;credit_card&#39;</span>
+</span></span><span style=display:flex><span>                 <span style=color:#66d9ef>then</span> <span style=color:#ae81ff>1</span> <span style=color:#66d9ef>else</span> <span style=color:#ae81ff>0</span> <span style=color:#66d9ef>end</span>)                             <span style=color:#66d9ef>as</span> orders_credit_card,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>sum</span>(<span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> primary_payment_type <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;boleto&#39;</span>
+</span></span><span style=display:flex><span>                 <span style=color:#66d9ef>then</span> <span style=color:#ae81ff>1</span> <span style=color:#66d9ef>else</span> <span style=color:#ae81ff>0</span> <span style=color:#66d9ef>end</span>)                             <span style=color:#66d9ef>as</span> orders_boleto,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>current_timestamp</span>                                       <span style=color:#66d9ef>as</span> dbt_updated_at
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> order_revenue
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> daily_aggregated
+</span></span><span style=display:flex><span><span style=color:#66d9ef>order</span> <span style=color:#66d9ef>by</span> order_date
+</span></span></code></pre></div><p>Bên cạnh các chỉ số tổng hợp cơ bản (GMV, tổng doanh thu, giá trị đơn trung bình), model còn tách riêng doanh thu phí vận chuyển (<code>freight_revenue</code>), số mặt hàng trung bình mỗi đơn (<code>avg_items_per_order</code>) và cơ cấu phương thức thanh toán theo hai hình thức phổ biến nhất tại thị trường Brazil - thẻ tín dụng và boleto (hình thức thanh toán qua hóa đơn ngân hàng) - dưới dạng hai cột đếm <code>orders_credit_card</code> và <code>orders_boleto</code>.</p><p>Điểm kỹ thuật quan trọng nhất của model này nằm ở cách xử lý quan hệ một-nhiều giữa đơn hàng và thanh toán. Trong dữ liệu Olist, một đơn hàng có thể được thanh toán qua nhiều dòng (ví dụ trả góp nhiều đợt), nên nếu JOIN trực tiếp bảng <code>stg_order_payments</code> vào cấp độ dòng của <code>stg_order_items</code> mà không tổng hợp trước, mỗi mặt hàng trong đơn sẽ bị nhân bản theo đúng số dòng thanh toán tương ứng - đây chính là hiện tượng fanout join đã nêu ở mục 5.1. Model giải quyết vấn đề này bằng cách tổng hợp <code>payments</code> về đúng một dòng cho mỗi <code>order_id</code> <strong>trước khi</strong> JOIN, sau đó gộp tiếp <code>items</code> về cấp độ đơn hàng trong CTE <code>order_revenue</code>. Kết quả là mỗi đơn hàng chỉ đóng góp đúng một dòng khi tính tổng doanh thu ở CTE <code>daily_aggregated</code>, bất kể đơn đó có bao nhiêu mặt hàng hay bao nhiêu lượt thanh toán.</p><h2 id=3-category_revenue_monthly---doanh-thu-theo-danh-mục-sản-phẩm>3. <code>category_revenue_monthly</code> - Doanh thu theo danh mục sản phẩm</h2><p>Model này có hạt dữ liệu là một dòng cho mỗi cặp (tháng, danh mục sản phẩm tiếng Anh), phục vụ câu hỏi &ldquo;danh mục nào bán chạy nhất mỗi tháng&rdquo;:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=display:flex><span><span style=color:#75715e>-- models/mart/finance/category_revenue_monthly.sql
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Monthly revenue breakdown by product category (English name)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>{{</span>
+</span></span><span style=display:flex><span>    config(
+</span></span><span style=display:flex><span>        materialized<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;table&#39;</span>,
+</span></span><span style=display:flex><span>        sort<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#39;order_month&#39;</span>, <span style=color:#e6db74>&#39;total_gmv&#39;</span>],
+</span></span><span style=display:flex><span>        tags<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#39;mart&#39;</span>, <span style=color:#e6db74>&#39;finance&#39;</span>]
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>with</span> items <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_order_items&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>orders <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_orders&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>where</span> order_date <span style=color:#f92672>&gt;=</span> <span style=color:#e6db74>&#39;{{ var(&#34;start_date&#34;) }}&#39;</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>and</span> order_status <span style=color:#66d9ef>not</span> <span style=color:#66d9ef>in</span> (<span style=color:#e6db74>&#39;canceled&#39;</span>, <span style=color:#e6db74>&#39;unavailable&#39;</span>)
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>products <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_products&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>joined <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        date_trunc(<span style=color:#e6db74>&#39;month&#39;</span>, o.order_date)::date     <span style=color:#66d9ef>as</span> order_month,
+</span></span><span style=display:flex><span>        p.category_en,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> o.order_id)                  <span style=color:#66d9ef>as</span> order_count,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(i.order_item_id)                      <span style=color:#66d9ef>as</span> items_sold,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>sum</span>(i.item_price), <span style=color:#ae81ff>2</span>)                 <span style=color:#66d9ef>as</span> total_gmv,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>avg</span>(i.item_price), <span style=color:#ae81ff>2</span>)                 <span style=color:#66d9ef>as</span> avg_item_price,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>sum</span>(i.freight_value), <span style=color:#ae81ff>2</span>)              <span style=color:#66d9ef>as</span> total_freight
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> items i
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> orders o   <span style=color:#66d9ef>on</span> i.order_id  <span style=color:#f92672>=</span> o.order_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> products p <span style=color:#66d9ef>on</span> i.product_id <span style=color:#f92672>=</span> p.product_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>ranked <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        <span style=color:#f92672>*</span>,
+</span></span><span style=display:flex><span>        rank() over (
+</span></span><span style=display:flex><span>            partition <span style=color:#66d9ef>by</span> order_month
+</span></span><span style=display:flex><span>            <span style=color:#66d9ef>order</span> <span style=color:#66d9ef>by</span> total_gmv <span style=color:#66d9ef>desc</span>
+</span></span><span style=display:flex><span>        )                       <span style=color:#66d9ef>as</span> revenue_rank_in_month,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>current_timestamp</span>       <span style=color:#66d9ef>as</span> dbt_updated_at
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> joined
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> ranked
+</span></span></code></pre></div><p>Hai lựa chọn thiết kế đáng chú ý ở model này. Thứ nhất, các đơn hàng ở trạng thái <code>canceled</code> hoặc <code>unavailable</code> bị loại khỏi CTE <code>orders</code> ngay từ đầu, vì mục tiêu của báo cáo là phản ánh doanh thu <strong>thực nhận theo danh mục</strong>, không phải doanh thu dự kiến trên các đơn chưa hoàn tất hoặc đã hủy - khác với <code>revenue_daily</code>, nơi các đơn hủy vẫn được giữ lại để tính tỷ lệ hủy đơn. Thứ hai, hàm cửa sổ <code>rank() over (partition by order_month order by total_gmv desc)</code> tính sẵn thứ hạng doanh thu của từng danh mục trong mỗi tháng, giúp truy vấn &ldquo;top 5 danh mục bán chạy nhất tháng này&rdquo; chỉ cần lọc <code>where revenue_rank_in_month &lt;= 5</code> mà không phải tính lại xếp hạng ở phía BI.</p><h2 id=4-fct_customer_cohorts---phân-tích-cohort-và-tỷ-lệ-giữ-chân-khách-hàng>4. <code>fct_customer_cohorts</code> - Phân tích cohort và tỷ lệ giữ chân khách hàng</h2><p>Đây là model phức tạp nhất về mặt logic, triển khai phân tích cohort (cohort analysis) - kỹ thuật phổ biến trong phân tích thương mại điện tử để đo lường mức độ khách hàng quay lại mua hàng theo thời gian, tính từ tháng họ phát sinh đơn hàng đầu tiên (<code>cohort_month</code>).</p><p>Một điểm cần lưu ý về dữ liệu Olist: mỗi đơn hàng gắn với một <code>customer_id</code> là mã định danh <strong>theo từng đơn</strong>, trong khi <code>customer_unique_id</code> mới là mã định danh duy nhất cho một con người thực. Nếu tính cohort theo <code>customer_id</code>, hệ thống sẽ hiểu nhầm rằng một khách hàng quay lại mua lần hai luôn là &ldquo;khách hàng mới&rdquo;, vì mỗi đơn hàng của họ mang một <code>customer_id</code> khác nhau. Vì vậy model bắt buộc phải quy đổi qua <code>customer_unique_id</code> ngay từ bước đầu tiên:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=display:flex><span><span style=color:#75715e>-- models/mart/customers/fct_customer_cohorts.sql
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- 
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Monthly cohort retention analysis.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- For each cohort (month of first purchase), tracks how many customers
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- purchased again in subsequent months (M+1, M+2, ...).
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Classic retention table used in e-commerce analytics.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>{{</span>
+</span></span><span style=display:flex><span>    config(
+</span></span><span style=display:flex><span>        materialized<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;table&#39;</span>,
+</span></span><span style=display:flex><span>        sort<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#39;cohort_month&#39;</span>, <span style=color:#e6db74>&#39;months_since_first_order&#39;</span>],
+</span></span><span style=display:flex><span>        dist<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;cohort_month&#39;</span>,
+</span></span><span style=display:flex><span>        tags<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#39;mart&#39;</span>, <span style=color:#e6db74>&#39;customers&#39;</span>, <span style=color:#e6db74>&#39;cohort&#39;</span>]
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>with</span> customers <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_customers&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>orders <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_orders&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>where</span> order_date <span style=color:#f92672>&gt;=</span> <span style=color:#e6db74>&#39;{{ var(&#34;start_date&#34;) }}&#39;</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>and</span> order_status <span style=color:#66d9ef>not</span> <span style=color:#66d9ef>in</span> (<span style=color:#e6db74>&#39;canceled&#39;</span>, <span style=color:#e6db74>&#39;unavailable&#39;</span>)
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- Map each order to the unique customer (not per-order customer_id)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>customer_orders <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>c</span>.customer_unique_id,
+</span></span><span style=display:flex><span>        o.order_date,
+</span></span><span style=display:flex><span>        date_trunc(<span style=color:#e6db74>&#39;month&#39;</span>, o.order_date)::date     <span style=color:#66d9ef>as</span> order_month,
+</span></span><span style=display:flex><span>        o.order_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> orders o
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> customers <span style=color:#66d9ef>c</span> <span style=color:#66d9ef>on</span> o.customer_id <span style=color:#f92672>=</span> <span style=color:#66d9ef>c</span>.customer_id
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- First order date per unique customer
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>first_orders <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        customer_unique_id,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>min</span>(order_month)    <span style=color:#66d9ef>as</span> cohort_month,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>min</span>(order_date)     <span style=color:#66d9ef>as</span> first_order_date
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> customer_orders
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- Join back to get months since first order for each subsequent purchase
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>customer_activity <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        co.customer_unique_id,
+</span></span><span style=display:flex><span>        fo.cohort_month,
+</span></span><span style=display:flex><span>        co.order_month,
+</span></span><span style=display:flex><span>        datediff(
+</span></span><span style=display:flex><span>            <span style=color:#e6db74>&#39;month&#39;</span>,
+</span></span><span style=display:flex><span>            fo.cohort_month,
+</span></span><span style=display:flex><span>            co.order_month
+</span></span><span style=display:flex><span>        )                   <span style=color:#66d9ef>as</span> months_since_first_order
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> customer_orders co
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> first_orders fo <span style=color:#66d9ef>on</span> co.customer_unique_id <span style=color:#f92672>=</span> fo.customer_unique_id
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- Cohort size (how many unique customers acquired per month)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>cohort_sizes <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        cohort_month,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> customer_unique_id)  <span style=color:#66d9ef>as</span> cohort_size
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> first_orders
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- Retained customers per cohort-month combination
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>retention_counts <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        cohort_month,
+</span></span><span style=display:flex><span>        months_since_first_order,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> customer_unique_id)  <span style=color:#66d9ef>as</span> retained_customers
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> customer_activity
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>, <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>final</span> <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        rc.cohort_month,
+</span></span><span style=display:flex><span>        cs.cohort_size,
+</span></span><span style=display:flex><span>        rc.months_since_first_order,
+</span></span><span style=display:flex><span>        rc.retained_customers,
+</span></span><span style=display:flex><span>        round(
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>100</span>.<span style=color:#ae81ff>0</span> <span style=color:#f92672>*</span> rc.retained_customers <span style=color:#f92672>/</span> cs.cohort_size,
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        )                                   <span style=color:#66d9ef>as</span> retention_rate_pct,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>current_timestamp</span>                   <span style=color:#66d9ef>as</span> dbt_updated_at
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> retention_counts rc
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> cohort_sizes cs <span style=color:#66d9ef>on</span> rc.cohort_month <span style=color:#f92672>=</span> cs.cohort_month
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>where</span> rc.months_since_first_order <span style=color:#f92672>&lt;=</span> <span style=color:#ae81ff>12</span>   <span style=color:#75715e>-- track up to 12 months
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#66d9ef>final</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>order</span> <span style=color:#66d9ef>by</span> cohort_month, months_since_first_order
+</span></span></code></pre></div><p>Luồng xử lý gồm năm bước tổng hợp nối tiếp: xác định khách hàng thực cho mỗi đơn (<code>customer_orders</code>), xác định tháng cohort của từng khách hàng (<code>first_orders</code>), tính khoảng cách tháng giữa mỗi lượt mua và tháng cohort (<code>customer_activity</code>), rồi tách thành hai chiều đếm độc lập - tổng số khách hàng trong mỗi cohort (<code>cohort_sizes</code>) và số khách hàng còn hoạt động ở từng mốc tháng (<code>retention_counts</code>) - trước khi kết hợp lại thành tỷ lệ giữ chân (<code>retention_rate_pct</code>) ở CTE <code>final</code>. Kết quả được giới hạn trong 12 tháng đầu sau lần mua đầu tiên (<code>months_since_first_order &lt;= 12</code>), đủ để dựng một bảng retention theo dạng ma trận cohort × tháng quen thuộc trong báo cáo thương mại điện tử.</p><h2 id=5-seller_performance---bảng-điểm-hiệu-suất-người-bán>5. <code>seller_performance</code> - Bảng điểm hiệu suất người bán</h2><p>Model này tổng hợp ba khía cạnh hiệu suất của từng người bán - doanh thu, đánh giá của khách hàng, và chất lượng giao hàng - thành một chỉ số tổng hợp duy nhất, <code>seller_score</code>, trên thang điểm 0-100:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=display:flex><span><span style=color:#75715e>-- models/mart/operations/seller_performance.sql
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- 
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Seller-level performance scorecard.
+</span></span></span><span style=display:flex><span><span style=color:#75715e>-- Aggregates revenue, order count, avg review score, late delivery rate.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>{{</span>
+</span></span><span style=display:flex><span>    config(
+</span></span><span style=display:flex><span>        materialized<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;table&#39;</span>,
+</span></span><span style=display:flex><span>        dist<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;seller_id&#39;</span>,
+</span></span><span style=display:flex><span>        tags<span style=color:#f92672>=</span>[<span style=color:#e6db74>&#39;mart&#39;</span>, <span style=color:#e6db74>&#39;operations&#39;</span>]
+</span></span><span style=display:flex><span>    )
+</span></span><span style=display:flex><span><span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>with</span> sellers <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_sellers&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>items <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_order_items&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>orders <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_orders&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>where</span> order_date <span style=color:#f92672>&gt;=</span> <span style=color:#e6db74>&#39;{{ var(&#34;start_date&#34;) }}&#39;</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>reviews <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#960050;background-color:#1e0010>{{</span> <span style=color:#66d9ef>ref</span>(<span style=color:#e6db74>&#39;stg_order_reviews&#39;</span>) <span style=color:#960050;background-color:#1e0010>}}</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- revenue per seller
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>seller_revenue <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        i.seller_id,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> i.order_id)          <span style=color:#66d9ef>as</span> total_orders,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(i.order_item_id)              <span style=color:#66d9ef>as</span> total_items_sold,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>sum</span>(i.item_price), <span style=color:#ae81ff>2</span>)         <span style=color:#66d9ef>as</span> total_gmv,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>avg</span>(i.item_price), <span style=color:#ae81ff>2</span>)         <span style=color:#66d9ef>as</span> avg_item_price,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>sum</span>(i.freight_value), <span style=color:#ae81ff>2</span>)      <span style=color:#66d9ef>as</span> total_freight,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>min</span>(o.order_date)                  <span style=color:#66d9ef>as</span> first_order_date,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>max</span>(o.order_date)                  <span style=color:#66d9ef>as</span> last_order_date
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> items i
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> orders o <span style=color:#66d9ef>on</span> i.order_id <span style=color:#f92672>=</span> o.order_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- review scores per seller
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>seller_reviews <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        i.seller_id,
+</span></span><span style=display:flex><span>        round(<span style=color:#66d9ef>avg</span>(r.review_score), <span style=color:#ae81ff>2</span>)       <span style=color:#66d9ef>as</span> avg_review_score,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> r.review_id)         <span style=color:#66d9ef>as</span> total_reviews,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> r.sentiment <span style=color:#f92672>=</span> <span style=color:#e6db74>&#39;negative&#39;</span> <span style=color:#66d9ef>then</span> r.review_id <span style=color:#66d9ef>end</span>) <span style=color:#66d9ef>as</span> negative_reviews
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> items i
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> reviews r <span style=color:#66d9ef>on</span> i.order_id <span style=color:#f92672>=</span> r.order_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>-- delivery performance per seller (sửa lại đếm distinct order_id)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>seller_delivery <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        i.seller_id,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> o.order_id) <span style=color:#66d9ef>as</span> delivered_orders,
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>count</span>(<span style=color:#66d9ef>distinct</span> <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>when</span> o.is_late_delivery <span style=color:#66d9ef>then</span> o.order_id <span style=color:#66d9ef>end</span>) <span style=color:#66d9ef>as</span> late_deliveries
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> items i
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>join</span> orders o <span style=color:#66d9ef>on</span> i.order_id <span style=color:#f92672>=</span> o.order_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>where</span> o.is_delivered <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>group</span> <span style=color:#66d9ef>by</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>),
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>final</span> <span style=color:#66d9ef>as</span> (
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>select</span>
+</span></span><span style=display:flex><span>        s.seller_id,
+</span></span><span style=display:flex><span>        s.city                                              <span style=color:#66d9ef>as</span> seller_city,
+</span></span><span style=display:flex><span>        s.state_code                                        <span style=color:#66d9ef>as</span> seller_state,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Revenue
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        coalesce(r.total_orders, <span style=color:#ae81ff>0</span>)                         <span style=color:#66d9ef>as</span> total_orders,
+</span></span><span style=display:flex><span>        coalesce(r.total_items_sold, <span style=color:#ae81ff>0</span>)                     <span style=color:#66d9ef>as</span> total_items_sold,
+</span></span><span style=display:flex><span>        coalesce(r.total_gmv, <span style=color:#ae81ff>0</span>)                             <span style=color:#66d9ef>as</span> total_gmv,
+</span></span><span style=display:flex><span>        coalesce(r.avg_item_price, <span style=color:#ae81ff>0</span>)                       <span style=color:#66d9ef>as</span> avg_item_price,
+</span></span><span style=display:flex><span>        r.first_order_date,
+</span></span><span style=display:flex><span>        r.last_order_date,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Reviews
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        coalesce(rv.avg_review_score, <span style=color:#ae81ff>0</span>)                    <span style=color:#66d9ef>as</span> avg_review_score,
+</span></span><span style=display:flex><span>        coalesce(rv.total_reviews, <span style=color:#ae81ff>0</span>)                       <span style=color:#66d9ef>as</span> total_reviews,
+</span></span><span style=display:flex><span>        round(
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>100</span>.<span style=color:#ae81ff>0</span> <span style=color:#f92672>*</span> coalesce(rv.negative_reviews, <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>            <span style=color:#f92672>/</span> <span style=color:#66d9ef>nullif</span>(coalesce(rv.total_reviews, <span style=color:#ae81ff>0</span>), <span style=color:#ae81ff>0</span>),
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        )                                                   <span style=color:#66d9ef>as</span> negative_review_pct,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Delivery
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        round(
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>100</span>.<span style=color:#ae81ff>0</span> <span style=color:#f92672>*</span> coalesce(d.late_deliveries, <span style=color:#ae81ff>0</span>)
+</span></span><span style=display:flex><span>            <span style=color:#f92672>/</span> <span style=color:#66d9ef>nullif</span>(coalesce(d.delivered_orders, <span style=color:#ae81ff>0</span>), <span style=color:#ae81ff>0</span>),
+</span></span><span style=display:flex><span>            <span style=color:#ae81ff>2</span>
+</span></span><span style=display:flex><span>        )                                                   <span style=color:#66d9ef>as</span> late_delivery_pct,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>-- Composite score: simple weighted rank signal (0–100)
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        round(
+</span></span><span style=display:flex><span>            (coalesce(rv.avg_review_score, <span style=color:#ae81ff>3</span>) <span style=color:#f92672>/</span> <span style=color:#ae81ff>5</span>.<span style=color:#ae81ff>0</span> <span style=color:#f92672>*</span> <span style=color:#ae81ff>50</span>)   <span style=color:#75715e>-- 50% weight on reviews
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>            <span style=color:#f92672>+</span> (<span style=color:#ae81ff>1</span>.<span style=color:#ae81ff>0</span> <span style=color:#f92672>-</span> coalesce(d.late_deliveries, <span style=color:#ae81ff>0</span>)::float 
+</span></span><span style=display:flex><span>                <span style=color:#f92672>/</span> <span style=color:#66d9ef>nullif</span>(coalesce(d.delivered_orders, <span style=color:#ae81ff>1</span>), <span style=color:#ae81ff>0</span>)) <span style=color:#f92672>*</span> <span style=color:#ae81ff>50</span>,  <span style=color:#75715e>-- 50% on on-time
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>            <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>        )                                                   <span style=color:#66d9ef>as</span> seller_score,
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>current_timestamp</span>                                   <span style=color:#66d9ef>as</span> dbt_updated_at
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>from</span> sellers s
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>left</span> <span style=color:#66d9ef>join</span> seller_revenue  r  <span style=color:#66d9ef>on</span> s.seller_id <span style=color:#f92672>=</span> r.seller_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>left</span> <span style=color:#66d9ef>join</span> seller_reviews  rv <span style=color:#66d9ef>on</span> s.seller_id <span style=color:#f92672>=</span> rv.seller_id
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>left</span> <span style=color:#66d9ef>join</span> seller_delivery d  <span style=color:#66d9ef>on</span> s.seller_id <span style=color:#f92672>=</span> d.seller_id
+</span></span><span style=display:flex><span>)
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>select</span> <span style=color:#f92672>*</span> <span style=color:#66d9ef>from</span> <span style=color:#66d9ef>final</span>
+</span></span></code></pre></div><p>Model được xây dựng theo đúng mẫu thiết kế chung đã nêu ở mục 1: ba CTE tổng hợp độc lập (<code>seller_revenue</code>, <code>seller_reviews</code>, <code>seller_delivery</code>), mỗi CTE nhóm dữ liệu theo <code>seller_id</code> trước, sau đó mới <code>left join</code> cả ba vào bảng <code>sellers</code> ở CTE <code>final</code>. Nhờ tổng hợp trước theo <code>seller_id</code> ở từng nhánh, phép <code>left join</code> cuối cùng không tạo ra fanout dù <code>sellers</code> có quan hệ một-nhiều với cả đơn hàng, đánh giá lẫn lượt giao hàng.</p><p>Công thức tính <code>seller_score</code> gồm hai thành phần, mỗi thành phần đóng góp tối đa 50 điểm:</p><ul><li><strong>Điểm đánh giá khách hàng (50%):</strong> điểm đánh giá trung bình trên thang 5, quy đổi tuyến tính sang thang 50 (<code>avg_review_score / 5.0 * 50</code>).</li><li><strong>Điểm giao hàng đúng hạn (50%):</strong> phần trăm đơn giao đúng hạn trong tổng số đơn đã giao, quy đổi sang thang 50 (<code>(1 - late_deliveries / delivered_orders) * 50</code>).</li></ul><p>Một người bán đạt điểm đánh giá tuyệt đối và không có đơn giao trễ sẽ đạt <code>seller_score = 100</code>; điểm số giảm dần tương ứng khi đánh giá thấp hơn hoặc tỷ lệ giao trễ tăng lên. Với người bán chưa có đánh giá hoặc chưa có đơn nào được giao (trường hợp người bán mới), công thức dùng <code>coalesce(rv.avg_review_score, 3)</code> để mặc định về mức điểm trung tính (3/5) thay vì 0, và <code>nullif(..., 1)</code> để tránh chia cho 0 khi <code>delivered_orders</code> bằng 0 - nhờ vậy người bán mới vẫn nhận được một điểm khởi đầu hợp lý thay vì bị tính điểm 0 một cách bất công hoặc gây lỗi runtime. Ràng buộc <code>seller_score</code> phải nằm trong khoảng 0-100 được kiểm tra tự động bằng dbt test, trình bày ở mục 5.4.3.</p><p><img alt="Kết quả truy vấn &lsquo;select seller_id, seller_city, seller_score, late_delivery_pct from mart.seller_performance&rsquo;" src=/fcj-internship-report/5-workshop/5.4-s3-onprem/5.4.2-create-interface-enpoint/image-1.png>
+<img alt="Kết quả truy vấn `select order_date, total_orders, gmv, total_revenue, cancellation_rate_pct from mart.revenue_daily " src=/fcj-internship-report/5-workshop/5.4-s3-onprem/5.4.2-create-interface-enpoint/image-2.png></p><footer class=footline></footer></div></div><div id=navigation><a class="nav nav-prev" href=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.1-prepare/ title="Chuẩn bị Tầng Staging (Ingestion & Staging Models)"><i class="fa fa-chevron-left"></i></a>
+<a class="nav nav-next" href=/fcj-internship-report/vi/5-workshop/5.4-s3-onprem/5.4.3-test-endpoint/ title="Điều phối bằng Airflow & Kiểm thử Chất lượng Dữ liệu" style=margin-right:0><i class="fa fa-chevron-right"></i></a></div></section><div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px><div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div></div><script src=/fcj-internship-report/js/clipboard.min.js?1786110378></script><script src=/fcj-internship-report/js/perfect-scrollbar.min.js?1786110378></script><script src=/fcj-internship-report/js/perfect-scrollbar.jquery.min.js?1786110378></script><script src=/fcj-internship-report/js/jquery.sticky.js?1786110378></script><script src=/fcj-internship-report/js/featherlight.min.js?1786110378></script><script src=/fcj-internship-report/js/highlight.pack.js?1786110378></script><script>hljs.initHighlightingOnLoad()</script><script src=/fcj-internship-report/js/modernizr.custom-3.6.0.js?1786110378></script><script src=/fcj-internship-report/js/learn.js?1786110378></script><script src=/fcj-internship-report/js/hugo-learn.js?1786110378></script><link href=/fcj-internship-report/mermaid/mermaid.css?1786110378 rel=stylesheet><script src=/fcj-internship-report/mermaid/mermaid.js?1786110378></script><script>mermaid.initialize({startOnLoad:!0})</script><script>(function(e,t,n,s,o,i,a){e.GoogleAnalyticsObject=o,(e[o]=e[o]||function(){(e[o].q=e[o].q||[]).push(arguments)},e[o].l=1*new Date),(i=t.createElement(n),a=t.getElementsByTagName(n)[0]),i.async=1,i.src=s,a.parentNode.insertBefore(i,a)})(window,document,"script","https://www.google-analytics.com/analytics.js","ga"),ga("create","UA-158079754-2","auto"),ga("send","pageview")</script></body></html>
