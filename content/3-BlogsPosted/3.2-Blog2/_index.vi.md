@@ -1,5 +1,5 @@
 ---
-title: "03. Truy tìm và tiêu diệt các tài nguyên Zombies trên AWS"
+title: "02. Truy tìm và tiêu diệt các tài nguyên Zombies trên AWS"
 date: 2026-07-07
 weight: 4
 chapter: false

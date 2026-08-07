@@ -1,5 +1,5 @@
 ---
-title: "03. Hunting Down and Eliminating Zombie Resources on AWS"
+title: "02. Hunting Down and Eliminating Zombie Resources on AWS"
 date: 2026-07-07
 weight: 4
 chapter: false

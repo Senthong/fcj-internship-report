@@ -13,6 +13,17 @@ Trong thời gian thực tập, tôi đã tham gia hai sự kiện chuyên ngàn
 
 &emsp;**Thời gian:** 27/06/2026
 
-&emsp;**Hình thức:** Tham gia trực tuyến (Livestream)
+&emsp;**Hình thức:** Tham gia trực tiếp
 
 &emsp;**Vai trò:** Người tham dự
+
+
+### [Event 2: FCAJ - Agentic AI Build Week](4-EventParticipated/4.2-Event2)
+
+ **Tên sự kiện:** FCAJ Community Day - Tháng 6/2026
+
+ **Thời gian:** 27 tháng 6, 2026
+
+ **Hình thức:** Livestream trực tuyến
+
+ **Vai trò:** Người tham dự
